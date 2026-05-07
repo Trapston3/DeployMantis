@@ -1,0 +1,23 @@
+replicaCount: 1
+
+image:
+  repository: aegis-suite
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+service:
+  type: ClusterIP
+
+env:
+  STRATA_BUFFER_SIZE: "50"
+  CORE_API_URL: "http://core-api:4000"
+  CHAOS_PROBABILITY: "0.2"
+  MAX_BUDGET: "1.00"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

@@ -1,0 +1,30 @@
+# Node.js
+node_modules/
+.next/
+dist/
+build/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+.env
+.env.*
+
+# Build artifacts
+aegis.exe
+aegis
+cli/build/
+cli/dist/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/

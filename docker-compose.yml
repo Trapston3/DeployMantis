@@ -1,0 +1,74 @@
+
+
+services:
+  strata:
+    build:
+      context: ./strata
+    ports:
+      - "${STRATA_PORT:-3002}:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+      - LOG_LEVEL=info
+      - STRATA_BUFFER_SIZE=${STRATA_BUFFER_SIZE:-50}
+
+  aegis-env:
+    build:
+      context: ./aegis-env
+    ports:
+      - "${AEGIS_ENV_PORT:-8000}:8000"
+    environment:
+      - API_BASE_URL=https://api-inference.huggingface.co/v1
+      # Provide HF_TOKEN in the environment or .env file
+
+  core-api:
+    build:
+      context: ./core-api
+    ports:
+      - "${CORE_API_PORT:-4000}:4000"
+    volumes:
+      - //var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - STRATA_URL=http://strata:3000
+      - AEGIS_ENV_URL=http://aegis-env:8000
+      - CUSTOM_MODEL_NAME=${CUSTOM_MODEL_NAME:-}
+      - INFERENCE_PROVIDER=${INFERENCE_PROVIDER:-ollama}
+    depends_on:
+      - strata
+      - aegis-env
+
+  swarm-chaos:
+    build:
+      context: ./swarm-chaos
+    ports:
+      - "5000:5000"
+    environment:
+      - CORE_API_URL=http://core-api:4000
+      - CHAOS_PROBABILITY=0.2
+    depends_on:
+      - core-api
+
+  vault-guard:
+    build:
+      context: ./vault-guard
+    ports:
+      - "5001:5001"
+
+  token-breaker:
+    build:
+      context: ./token-breaker
+    ports:
+      - "5002:5002"
+    environment:
+      - MAX_BUDGET=1.00
+
+  aegis-dash:
+    build:
+      context: ./aegis-dash
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - NEXT_PUBLIC_CORE_API_URL=http://localhost:4000
+    depends_on:
+      - core-api
