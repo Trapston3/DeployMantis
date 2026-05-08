@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import useSWR from "swr";
 import { Shield, CheckCircle, AlertTriangle, ScanLine, Loader2, WifiOff, CheckCircle2 } from "lucide-react";
 

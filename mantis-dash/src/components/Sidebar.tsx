@@ -8,7 +8,6 @@ import {
   Network,
   Shield,
   Banknote,
-  Monitor,
   Cpu,
   RotateCw,
   Play,
