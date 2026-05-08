@@ -5,7 +5,7 @@ import httpx
 
 from scanner.redactor import redactor, RULES
 
-app = FastAPI(title="Aegis Reliability Suite - VaultGuard")
+app = FastAPI(title="DeployMantis Reliability Suite - VaultGuard")
 
 app.add_middleware(
     CORSMiddleware,

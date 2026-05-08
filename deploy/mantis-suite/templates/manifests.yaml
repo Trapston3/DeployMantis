@@ -1,0 +1,337 @@
+{{- $fullname := include "deploymantis-suite.fullname" . -}}
+{{- $labels := include "deploymantis-suite.labels" . -}}
+
+{{/* Helper functions for labels (inlined for simplicity or assumed available) */}}
+{{- define "deploymantis-suite.name" -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- define "deploymantis-suite.fullname" -}}
+{{- $name := default .Chart.Name .Values.nameOverride -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- define "deploymantis-suite.labels" -}}
+helm.sh/chart: {{ include "deploymantis-suite.chart" . }}
+app.kubernetes.io/name: {{ include "deploymantis-suite.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end -}}
+{{- define "deploymantis-suite.chart" -}}
+{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+---
+# Strata
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-strata
+  labels:
+    {{- $labels | nindent 4 }}
+    component: strata
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- $labels | nindent 6 }}
+      component: strata
+  template:
+    metadata:
+      labels:
+        {{- $labels | nindent 8 }}
+        component: strata
+    spec:
+      containers:
+        - name: strata
+          image: "{{ .Values.image.repository }}-strata:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: "3000"
+            - name: STRATA_BUFFER_SIZE
+              value: {{ .Values.env.STRATA_BUFFER_SIZE | quote }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: strata
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 3000
+      targetPort: 3000
+  selector:
+    {{- $labels | nindent 4 }}
+    component: strata
+
+---
+# DeployMantisEnv
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-deploymantis-env
+  labels:
+    {{- $labels | nindent 4 }}
+    component: deploymantis-env
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- $labels | nindent 6 }}
+      component: deploymantis-env
+  template:
+    metadata:
+      labels:
+        {{- $labels | nindent 8 }}
+        component: deploymantis-env
+    spec:
+      containers:
+        - name: deploymantis-env
+          image: "{{ .Values.image.repository }}-deploymantis-env:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deploymantis-env
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 8000
+      targetPort: 8000
+  selector:
+    {{- $labels | nindent 4 }}
+    component: deploymantis-env
+
+---
+# Core API
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-core-api
+  labels:
+    {{- $labels | nindent 4 }}
+    component: core-api
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- $labels | nindent 6 }}
+      component: core-api
+  template:
+    metadata:
+      labels:
+        {{- $labels | nindent 8 }}
+        component: core-api
+    spec:
+      containers:
+        - name: core-api
+          image: "{{ .Values.image.repository }}-core-api:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 4000
+          env:
+            - name: STRATA_URL
+              value: "http://strata:3000"
+            - name: DEPLOYMANTIS_ENV_URL
+              value: "http://deploymantis-env:8000"
+          volumeMounts:
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: core-api
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 4000
+      targetPort: 4000
+  selector:
+    {{- $labels | nindent 4 }}
+    component: core-api
+
+---
+# SwarmChaos
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-swarm-chaos
+  labels:
+    {{- $labels | nindent 4 }}
+    component: swarm-chaos
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- $labels | nindent 6 }}
+      component: swarm-chaos
+  template:
+    metadata:
+      labels:
+        {{- $labels | nindent 8 }}
+        component: swarm-chaos
+    spec:
+      containers:
+        - name: swarm-chaos
+          image: "{{ .Values.image.repository }}-swarm-chaos:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 5000
+          env:
+            - name: CORE_API_URL
+              value: {{ .Values.env.CORE_API_URL | quote }}
+            - name: CHAOS_PROBABILITY
+              value: {{ .Values.env.CHAOS_PROBABILITY | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: swarm-chaos
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 5000
+      targetPort: 5000
+  selector:
+    {{- $labels | nindent 4 }}
+    component: swarm-chaos
+
+---
+# VaultGuard
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-vault-guard
+  labels:
+    {{- $labels | nindent 4 }}
+    component: vault-guard
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- $labels | nindent 6 }}
+      component: vault-guard
+  template:
+    metadata:
+      labels:
+        {{- $labels | nindent 8 }}
+        component: vault-guard
+    spec:
+      containers:
+        - name: vault-guard
+          image: "{{ .Values.image.repository }}-vault-guard:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 5001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-guard
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 5001
+      targetPort: 5001
+  selector:
+    {{- $labels | nindent 4 }}
+    component: vault-guard
+
+---
+# TokenBreaker
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-token-breaker
+  labels:
+    {{- $labels | nindent 4 }}
+    component: token-breaker
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- $labels | nindent 6 }}
+      component: token-breaker
+  template:
+    metadata:
+      labels:
+        {{- $labels | nindent 8 }}
+        component: token-breaker
+    spec:
+      containers:
+        - name: token-breaker
+          image: "{{ .Values.image.repository }}-token-breaker:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 5002
+          env:
+            - name: MAX_BUDGET
+              value: {{ .Values.env.MAX_BUDGET | quote }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: token-breaker
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: 5002
+      targetPort: 5002
+  selector:
+    {{- $labels | nindent 4 }}
+    component: token-breaker
+
+---
+# DeployMantisDash
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $fullname }}-deploymantis-dash
+  labels:
+    {{- $labels | nindent 4 }}
+    component: deploymantis-dash
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- $labels | nindent 6 }}
+      component: deploymantis-dash
+  template:
+    metadata:
+      labels:
+        {{- $labels | nindent 8 }}
+        component: deploymantis-dash
+    spec:
+      containers:
+        - name: deploymantis-dash
+          image: "{{ .Values.image.repository }}-deploymantis-dash:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_CORE_API_URL
+              value: "http://core-api:4000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: deploymantis-dash
+spec:
+  type: NodePort
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30001
+  selector:
+    {{- $labels | nindent 4 }}
+    component: deploymantis-dash

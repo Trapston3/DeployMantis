@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from proxy.router import router as proxy_router, CHAOS_CONFIG
 
-app = FastAPI(title="Aegis Reliability Suite - SwarmChaos")
+app = FastAPI(title="DeployMantis Reliability Suite - SwarmChaos")
 
 app.add_middleware(
     CORSMiddleware,

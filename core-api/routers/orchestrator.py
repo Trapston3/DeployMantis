@@ -1,8 +1,8 @@
 """
-Aegis Reliability Suite — Orchestrator Router
+DeployMantis Reliability Suite — Orchestrator Router
 ==============================================
 Provides container lifecycle management and health probing
-for all services in the Aegis Docker Compose cluster.
+for all services in the DeployMantis Docker Compose cluster.
 """
 
 import os
@@ -11,7 +11,7 @@ import httpx
 from fastapi import APIRouter, HTTPException
 from typing import Optional
 
-logger = logging.getLogger("aegis.orchestrator")
+logger = logging.getLogger("deploymantis.orchestrator")
 
 router = APIRouter()
 
@@ -19,12 +19,12 @@ router = APIRouter()
 # Maps service names to their internal URLs and compose service names.
 _SERVICES = {
     "strata":        {"url": "http://strata:3000",        "container": "ai-suite-strata-1"},
-    "aegis-env":     {"url": "http://aegis-env:8000",     "container": "ai-suite-aegis-env-1"},
+    "deploymantis-env":     {"url": "http://deploymantis-env:8000",     "container": "ai-suite-deploymantis-env-1"},
     "core-api":      {"url": "http://localhost:4000",      "container": "ai-suite-core-api-1"},
     "swarm-chaos":   {"url": "http://swarm-chaos:5000",   "container": "ai-suite-swarm-chaos-1"},
     "vault-guard":   {"url": "http://vault-guard:5001",   "container": "ai-suite-vault-guard-1"},
     "token-breaker": {"url": "http://token-breaker:5002", "container": "ai-suite-token-breaker-1"},
-    "aegis-dash":    {"url": "http://aegis-dash:3000",    "container": "ai-suite-aegis-dash-1"},
+    "deploymantis-dash":    {"url": "http://deploymantis-dash:3000",    "container": "ai-suite-deploymantis-dash-1"},
 }
 
 # ── Health Probing (lightweight — no Docker SDK dependency) ───
@@ -75,7 +75,7 @@ async def get_node_stats():
     try:
         containers = client.containers.list()
         for container in containers:
-            # Only track containers that are part of the aegis cluster
+            # Only track containers that are part of the deploymantis cluster
             if "ai-suite" in container.name:
                 try:
                     stats = container.stats(stream=False)

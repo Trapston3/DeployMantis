@@ -1,0 +1,13 @@
+{
+  "name": "deploymantis-desktop",
+  "version": "1.0.0",
+  "description": "DeployMantis Reliability Suite - Desktop Client",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^30.0.0"
+  }
+}

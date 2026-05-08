@@ -1,4 +1,4 @@
-"""Aegis Reliability Suite — Python SDK"""
-from .client import AegisClient, AegisResponse
+"""DeployMantis Reliability Suite — Python SDK"""
+from .client import DeployMantisClient, DeployMantisResponse
 
-__all__ = ["AegisClient", "AegisResponse"]
+__all__ = ["DeployMantisClient", "DeployMantisResponse"]

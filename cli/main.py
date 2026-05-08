@@ -1,13 +1,13 @@
 """
-Aegis Reliability Suite — CLI Entrypoint
+DeployMantis Reliability Suite — CLI Entrypoint
 =========================================
 Single-binary CLI that wraps Docker Compose lifecycle
 and provides cluster health monitoring.
 
 Commands:
-  aegis start   — Bring up all services and open the dashboard
-  aegis stop    — Tear down all services
-  aegis status  — Probe the orchestrator and print a health table
+  deploymantis start   — Bring up all services and open the dashboard
+  deploymantis stop    — Tear down all services
+  deploymantis status  — Probe the orchestrator and print a health table
 """
 
 import os
@@ -25,8 +25,8 @@ from rich.text import Text
 from rich import box
 
 app = typer.Typer(
-    name="aegis",
-    help="Aegis Reliability Suite — CLI Manager",
+    name="deploymantis",
+    help="DeployMantis Reliability Suite — CLI Manager",
     add_completion=False,
     no_args_is_help=True,
 )
@@ -90,7 +90,7 @@ def _wait_for_api(timeout: int = 30) -> bool:
 @app.command()
 def start():
     """
-    Launch the Aegis cluster in the background and open the dashboard.
+    Launch the DeployMantis cluster in the background and open the dashboard.
 
     Runs `docker compose up -d --build`, waits for the Core API to
     become healthy, then opens http://localhost:3001 in the default
@@ -98,7 +98,7 @@ def start():
     """
     console.print(
         Panel(
-            "[bold cyan]Aegis Reliability Suite[/bold cyan]\n"
+            "[bold cyan]DeployMantis Reliability Suite[/bold cyan]\n"
             "[dim]Bringing up the cluster…[/dim]",
             box=box.ROUNDED,
             border_style="cyan",
@@ -134,13 +134,13 @@ def start():
 @app.command()
 def stop():
     """
-    Tear down the Aegis cluster.
+    Tear down the DeployMantis cluster.
 
     Runs `docker compose down` and removes stopped containers.
     """
     console.print(
         Panel(
-            "[bold red]Aegis Reliability Suite[/bold red]\n"
+            "[bold red]DeployMantis Reliability Suite[/bold red]\n"
             "[dim]Shutting down the cluster…[/dim]",
             box=box.ROUNDED,
             border_style="red",
@@ -172,7 +172,7 @@ def status():
     except httpx.ConnectError:
         console.print(
             "[bold red]✖ Cannot reach Core API.[/bold red]  "
-            "Is the cluster running?  Try [bold]aegis start[/bold]."
+            "Is the cluster running?  Try [bold]deploymantis start[/bold]."
         )
         raise typer.Exit(code=1)
     except httpx.TimeoutException:
@@ -185,7 +185,7 @@ def status():
     services = data.get("services", [])
 
     table = Table(
-        title="Aegis Cluster Health",
+        title="DeployMantis Cluster Health",
         box=box.HEAVY_HEAD,
         title_style="bold cyan",
         header_style="bold white on #1a1a2e",
@@ -215,7 +215,7 @@ def status():
     else:
         console.print(
             f"[bold yellow]{online}/{total} services online. "
-            f"Run [bold]aegis start[/bold] to recover.[/bold yellow]"
+            f"Run [bold]deploymantis start[/bold] to recover.[/bold yellow]"
         )
 
 

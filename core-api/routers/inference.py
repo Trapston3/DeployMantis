@@ -37,7 +37,7 @@ async def evaluate(request: EvaluateRequest):
         result = {"score": score, "raw_response": response}
         headers = {}
         if gateway.was_recovered:
-            headers["X-Aegis-Recovered"] = "true"
+            headers["X-Mantis-Recovered"] = "true"
         return JSONResponse(content=result, headers=headers)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -49,7 +49,7 @@ async def generate(request: GenerateRequest):
         result = {"response": response}
         headers = {}
         if gateway.was_recovered:
-            headers["X-Aegis-Recovered"] = "true"
+            headers["X-Mantis-Recovered"] = "true"
         return JSONResponse(content=result, headers=headers)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

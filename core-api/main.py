@@ -8,7 +8,7 @@ from routers.ingest import router as ingest_router
 from routers.chaos import router as chaos_router
 from routers.vault import router as vault_router
 
-app = FastAPI(title="Aegis Reliability Suite - Core API")
+app = FastAPI(title="DeployMantis - Core API")
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,7 +25,7 @@ app.include_router(chaos_router, prefix="/api/v1/chaos", tags=["chaos"])
 app.include_router(vault_router, prefix="/api/v1/vault", tags=["vault"])
 
 STRATA_URL = os.getenv("STRATA_URL", "http://strata:3000")
-AEGIS_ENV_URL = os.getenv("AEGIS_ENV_URL", "http://aegis-env:8000")
+MANTIS_ENV_URL = os.getenv("MANTIS_ENV_URL", "http://mantis-env:8000")
 
 
 # ── Strata Proxy (path-stripped relay) ────────────────────────
@@ -63,11 +63,11 @@ async def proxy_strata(request: Request, path: str):
     return Response(content=resp.content, status_code=resp.status_code, headers=safe_headers)
 
 
-# ── AegisEnv Proxy ────────────────────────────────────────────
+# ── MantisEnv Proxy ────────────────────────────────────────────
 
-@app.api_route("/api/v1/aegis-env/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def proxy_aegis_env(request: Request, path: str):
-    target = f"{AEGIS_ENV_URL}/api/v1/{path}"
+@app.api_route("/api/v1/mantis-env/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
+async def proxy_mantis_env(request: Request, path: str):
+    target = f"{MANTIS_ENV_URL}/api/v1/{path}"
     query = request.url.query
     if query:
         target += f"?{query}"
@@ -79,7 +79,7 @@ async def proxy_aegis_env(request: Request, path: str):
                                         headers={"Content-Type": request.headers.get("content-type", "application/json")})
         except Exception as e:
             return Response(
-                content=f'{{"detail":"AegisEnv unreachable: {str(e)}"}}',
+                content=f'{{"detail":"MantisEnv unreachable: {str(e)}"}}',
                 status_code=502,
                 media_type="application/json"
             )

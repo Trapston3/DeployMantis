@@ -1,13 +1,13 @@
 """
-Aegis Reliability Suite — Python SDK
-=====================================
-A high-level client for routing requests through the Aegis
-governance proxy chain (TokenBreaker → VaultGuard → SwarmChaos → AegisEnv).
+DeployMantis — Python SDK
+=========================
+A high-level client for routing requests through the DeployMantis
+governance proxy chain (TokenBreaker → VaultGuard → SwarmChaos → MantisEnv).
 
 Usage:
-    from sdk.client import AegisClient
+    from sdk.client import MantisClient
 
-    client = AegisClient(agent_id="my-agent")
+    client = MantisClient(agent_id="my-agent")
     result = client.step({"action_type": "query_logs", "target_server_id": "srv-001"})
 """
 
@@ -22,16 +22,16 @@ _HOP_REGISTRY = {
     "breaker": "http://token-breaker:5002",
     "vault":   "http://vault-guard:5001",
     "chaos":   "http://swarm-chaos:5000",
-    "env":     "http://aegis-env:8000",
+    "env":     "http://mantis-env:8000",
 }
 
 # Default hop order for full governance pipeline
 _DEFAULT_HOPS = ["vault", "chaos", "env"]
 
 
-class AegisClient:
+class MantisClient:
     """
-    High-level SDK client for the Aegis Reliability Suite.
+    High-level SDK client for DeployMantis.
 
     Automatically constructs the multi-hop proxy chain headers
     (X-Target-Url, X-Chaos-Url, X-Final-Url) so callers never
@@ -64,12 +64,12 @@ class AegisClient:
         payload: dict[str, Any],
         path: str = "/api/v1/step",
         hops: list[str] | None = None,
-    ) -> "AegisResponse":
+    ) -> "MantisResponse":
         """
         Fire a synchronous request through the governance pipeline.
 
         Args:
-            payload:  The JSON body (e.g. an ActionRequest for AegisEnv).
+            payload:  The JSON body (e.g. an ActionRequest for DeployMantisEnv).
             path:     The API path appended to every hop.
             hops:     Ordered list of proxy hops AFTER TokenBreaker.
                       Default: ``["vault", "chaos", "env"]``.
@@ -77,7 +77,7 @@ class AegisClient:
                       Pass ``["env"]`` to skip governance entirely.
 
         Returns:
-            An ``AegisResponse`` with status_code, body, and metadata.
+            An ``DeployMantisResponse`` with status_code, body, and metadata.
         """
         hops = hops if hops is not None else list(_DEFAULT_HOPS)
         headers = self._build_headers(hops)
@@ -86,7 +86,7 @@ class AegisClient:
         with httpx.Client(timeout=self.timeout) as client:
             resp = client.post(url, json=payload, headers=headers)
 
-        return AegisResponse(
+        return MantisResponse(
             status_code=resp.status_code,
             body=_safe_json(resp),
             headers=dict(resp.headers),
@@ -98,7 +98,7 @@ class AegisClient:
         payload: dict[str, Any],
         path: str = "/api/v1/step",
         hops: list[str] | None = None,
-    ) -> "AegisResponse":
+    ) -> "MantisResponse":
         """Async variant of :meth:`step`."""
         hops = hops if hops is not None else list(_DEFAULT_HOPS)
         headers = self._build_headers(hops)
@@ -107,7 +107,7 @@ class AegisClient:
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             resp = await client.post(url, json=payload, headers=headers)
 
-        return AegisResponse(
+        return MantisResponse(
             status_code=resp.status_code,
             body=_safe_json(resp),
             headers=dict(resp.headers),
@@ -121,8 +121,8 @@ class AegisClient:
             resp.raise_for_status()
             return resp.json()
 
-    def reset_env(self, hops: list[str] | None = None) -> "AegisResponse":
-        """Reset the AegisEnv RL environment through the pipeline."""
+    def reset_env(self, hops: list[str] | None = None) -> "MantisResponse":
+        """Reset the MantisEnv RL environment through the pipeline."""
         return self.step({}, path="/api/v1/reset", hops=hops)
 
     # ── Header Construction ───────────────────────────────────
@@ -156,14 +156,14 @@ class AegisClient:
         return headers
 
     def __repr__(self) -> str:
-        return f"AegisClient(agent_id={self.agent_id!r}, base_url={self.base_url!r})"
+        return f"MantisClient(agent_id={self.agent_id!r}, base_url={self.base_url!r})"
 
 
 # ── Response Wrapper ──────────────────────────────────────────
 
-class AegisResponse:
+class MantisResponse:
     """
-    Structured response from the Aegis pipeline.
+    Structured response from the DeployMantis pipeline.
 
     Attributes:
         status_code:  HTTP status code from the final response.
@@ -184,7 +184,7 @@ class AegisResponse:
         self.body = body
         self.headers = headers
         self.raw = raw
-        self.recovered = headers.get("x-aegis-recovered", "").lower() == "true"
+        self.recovered = headers.get("x-mantis-recovered", "").lower() == "true"
 
     @property
     def ok(self) -> bool:
@@ -214,7 +214,7 @@ class AegisResponse:
         if self.chaos_injected:
             extras.append("chaos")
         suffix = f" [{', '.join(extras)}]" if extras else ""
-        return f"AegisResponse({tag}{suffix})"
+        return f"MantisResponse({tag}{suffix})"
 
 
 # ── Helpers ───────────────────────────────────────────────────

@@ -4,7 +4,7 @@ import httpx
 
 from ledger.circuit_breaker import breaker
 
-app = FastAPI(title="Aegis Reliability Suite - TokenBreaker")
+app = FastAPI(title="DeployMantis Reliability Suite - TokenBreaker")
 
 app.add_middleware(
     CORSMiddleware,

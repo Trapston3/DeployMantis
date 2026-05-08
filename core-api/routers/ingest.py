@@ -1,12 +1,12 @@
 """
-Aegis Reliability Suite — BYOD Ingestion Router
+DeployMantis Reliability Suite — BYOD Ingestion Router
 =================================================
 POST /api/v1/ingest/custom-trace
 
 Accepts an array of custom JSON logs or LLM traces from a developer's
-external system, normalizes them into the standard Aegis frame structure,
+external system, normalizes them into the standard DeployMantis frame structure,
 and pushes them into the Strata TemporalScrubber buffer so they appear
-in the Aegis Dashboard timeline.
+in the DeployMantis Dashboard timeline.
 """
 
 import os
@@ -19,7 +19,7 @@ import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-logger = logging.getLogger("aegis.ingest")
+logger = logging.getLogger("deploymantis.ingest")
 
 router = APIRouter()
 
@@ -100,7 +100,7 @@ class IngestResponse(BaseModel):
 # ── Helpers ───────────────────────────────────────────────────
 
 def _normalize_level(level: str) -> str:
-    """Clamp to the four levels Aegis understands."""
+    """Clamp to the four levels DeployMantis understands."""
     level = level.strip().lower()
     if level in ("debug", "info", "warn", "warning", "error", "fatal", "critical"):
         if level in ("warning", "fatal", "critical"):
@@ -122,9 +122,9 @@ def _infer_error_code(status: int, path: str) -> str:
     return "EXTERNAL_TRACE"
 
 
-def _to_aegis_frame(trace: CustomTrace) -> dict:
+def _to_deploymantis_frame(trace: CustomTrace) -> dict:
     """
-    Convert a CustomTrace into the canonical Aegis frame shape
+    Convert a CustomTrace into the canonical DeployMantis frame shape
     expected by the TemporalDebugger / Strata buffer.
     """
     ts = trace.timestamp or datetime.now(timezone.utc).isoformat()
@@ -175,7 +175,7 @@ def _to_aegis_frame(trace: CustomTrace) -> dict:
     summary="Ingest custom traces from external systems",
     description=(
         "Accepts an array of custom JSON logs or LLM traces, "
-        "normalises them into Aegis frames, and pushes them "
+        "normalises them into DeployMantis frames, and pushes them "
         "into the Strata TemporalScrubber buffer."
     ),
 )
@@ -183,7 +183,7 @@ async def ingest_custom_traces(payload: IngestRequest):
     """
     BYOD ingestion endpoint.
 
-    1. Validate & normalise each trace into an Aegis frame.
+    1. Validate & normalise each trace into an DeployMantis frame.
     2. POST each frame to Strata's internal log-append API.
     3. Return a summary of what was ingested.
     """
@@ -192,7 +192,7 @@ async def ingest_custom_traces(payload: IngestRequest):
 
     for trace in payload.traces:
         try:
-            frame = _to_aegis_frame(trace)
+            frame = _to_deploymantis_frame(trace)
             frames.append(frame)
         except Exception as exc:
             logger.warning("Failed to normalise trace: %s — %s", trace.message[:80], exc)

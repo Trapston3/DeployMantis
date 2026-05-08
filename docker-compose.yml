@@ -5,67 +5,74 @@ services:
     build:
       context: ./strata
     ports:
-      - "${STRATA_PORT:-3002}:3000"
+    container_name: strata
+    ports:
+      - "3002:3002"
     environment:
       - PORT=3000
       - HOST=0.0.0.0
       - LOG_LEVEL=info
       - STRATA_BUFFER_SIZE=${STRATA_BUFFER_SIZE:-50}
 
-  aegis-env:
+  mantis-env:
     build:
-      context: ./aegis-env
+      context: ./mantis-env
+    container_name: mantis-env
     ports:
-      - "${AEGIS_ENV_PORT:-8000}:8000"
+      - "8000:8000"
     environment:
-      - API_BASE_URL=https://api-inference.huggingface.co/v1
-      # Provide HF_TOKEN in the environment or .env file
+      - CORE_API_URL=http://core-api:4000
 
   core-api:
     build:
       context: ./core-api
+    container_name: core-api
     ports:
-      - "${CORE_API_PORT:-4000}:4000"
+      - "4000:4000"
     volumes:
       - //var/run/docker.sock:/var/run/docker.sock
     environment:
-      - STRATA_URL=http://strata:3000
-      - AEGIS_ENV_URL=http://aegis-env:8000
-      - CUSTOM_MODEL_NAME=${CUSTOM_MODEL_NAME:-}
+      - STRATA_URL=http://strata:3002
+      - MANTIS_ENV_URL=http://mantis-env:8000
+      - CUSTOM_MODEL_NAME=${CUSTOM_MODEL_NAME:-llama3.2}
       - INFERENCE_PROVIDER=${INFERENCE_PROVIDER:-ollama}
     depends_on:
       - strata
-      - aegis-env
+      - mantis-env
 
   swarm-chaos:
     build:
       context: ./swarm-chaos
+    container_name: swarm-chaos
     ports:
       - "5000:5000"
     environment:
       - CORE_API_URL=http://core-api:4000
-      - CHAOS_PROBABILITY=0.2
+      - CHAOS_PROBABILITY=${CHAOS_PROBABILITY:-0.2}
     depends_on:
       - core-api
 
   vault-guard:
     build:
       context: ./vault-guard
+    container_name: vault-guard
     ports:
       - "5001:5001"
 
   token-breaker:
     build:
       context: ./token-breaker
+    container_name: token-breaker
     ports:
       - "5002:5002"
     environment:
-      - MAX_BUDGET=1.00
+      - MAX_BUDGET=${MAX_BUDGET:-1.00}
 
-  aegis-dash:
+  mantis-dash:
     build:
-      context: ./aegis-dash
+      context: ./mantis-dash
       dockerfile: Dockerfile
+    container_name: mantis-dash
     ports:
       - "3001:3000"
     environment:

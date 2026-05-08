@@ -2,7 +2,7 @@ import os
 import logging
 import httpx
 
-logger = logging.getLogger("aegis.llm_gateway")
+logger = logging.getLogger("deploymantis.llm_gateway")
 
 INFERENCE_PROVIDER = os.getenv("INFERENCE_PROVIDER", "ollama")
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://host.docker.internal:11434/api/generate")
@@ -19,7 +19,7 @@ HF_TOKEN = os.getenv("HF_TOKEN", "")
 # ── Autonomous Recovery ───────────────────────────────────────
 # When enabled, if the primary provider fails (timeout, 5xx),
 # the gateway automatically reroutes to the local Ollama model
-# and tags the response with X-Aegis-Recovered: true.
+# and tags the response with X-DeployMantis-Recovered: true.
 AUTONOMOUS_RECOVERY = os.getenv("AUTONOMOUS_RECOVERY", "true").lower() == "true"
 
 

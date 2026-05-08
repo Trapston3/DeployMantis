@@ -1,8 +1,8 @@
 """
 ╔══════════════════════════════════════════════════════════════╗
-║  AEGIS RELIABILITY SUITE — ROGUE AGENT INTEGRATION TEST    ║
+║  DEPLOYMANTIS RELIABILITY SUITE — ROGUE AGENT INTEGRATION TEST    ║
 ║  Codename: rogue-agent-007                                  ║
-║  Pipeline: TokenBreaker → VaultGuard → SwarmChaos → AegisEnv║
+║  Pipeline: TokenBreaker → VaultGuard → SwarmChaos → DeployMantisEnv║
 ╚══════════════════════════════════════════════════════════════╝
 
 This script fires 15 concurrent requests through the full
@@ -10,7 +10,7 @@ governance pipeline to validate:
   1. TokenBreaker's financial circuit breaker (HTTP 402)
   2. VaultGuard's PII redaction ([REDACTED_EMAIL], [REDACTED_CC])
   3. SwarmChaos' chaos injection (HTTP 502/529 bottleneck crashes)
-  4. AegisEnv's RL environment step responses (HTTP 200)
+  4. DeployMantisEnv's RL environment step responses (HTTP 200)
 """
 
 import asyncio
@@ -35,7 +35,7 @@ HEADERS = {
     "X-Agent-Id": AGENT_ID,
     "X-Target-Url": "http://vault-guard:5001",
     "X-Chaos-Url": "http://swarm-chaos:5000",
-    "X-Final-Url": "http://aegis-env:8000",
+    "X-Final-Url": "http://deploymantis-env:8000",
     "Content-Type": "application/json",
 }
 
@@ -75,11 +75,11 @@ class C:
 def banner():
     print(f"""
 {C.CYAN}{C.BOLD}╔══════════════════════════════════════════════════════════════╗
-║          AEGIS RELIABILITY SUITE — VICTORY LAP              ║
+║          DEPLOYMANTIS RELIABILITY SUITE — VICTORY LAP              ║
 ║          Rogue Agent Integration Test                       ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Agent ID  : {C.YELLOW}rogue-agent-007{C.CYAN}                                 ║
-║  Pipeline  : {C.WHITE}TokenBreaker → VaultGuard → SwarmChaos → AegisEnv{C.CYAN} ║
+║  Pipeline  : {C.WHITE}TokenBreaker → VaultGuard → SwarmChaos → DeployMantisEnv{C.CYAN} ║
 ║  Requests  : {C.WHITE}{TOTAL_REQUESTS} concurrent POST volleys{C.CYAN}                      ║
 ║  PII Bait  : {C.RED}john.doe@example.com | 4111222233334444{C.CYAN}        ║
 ╚══════════════════════════════════════════════════════════════╝{C.RESET}

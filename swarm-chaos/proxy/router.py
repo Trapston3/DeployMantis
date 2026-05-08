@@ -66,7 +66,7 @@ async def proxy_post(request: Request, path: str):
         full_url = target_url
 
     # ── SwarmChaos is the LAST proxy in the chain ──
-    # X-Target-Url already points at the final destination (e.g., aegis-env).
+    # X-Target-Url already points at the final destination (e.g., deploymantis-env).
     # Strip all hop headers before forwarding to the real service.
     forwarded_headers = {}
     for k, v in request.headers.items():
