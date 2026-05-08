@@ -1,40 +1,46 @@
-# DeployMantis Ecosystem Context for AI Agents
+# DeployMantis: AI Reliability & SRE Suite
+**System Context & Architectural Constraints for AI Coding Agents**
 
-Welcome to **DeployMantis**, an enterprise-grade AI Reliability Suite designed for multi-agent governance, chaos testing, and observability.
+Welcome to the DeployMantis codebase. You are acting as a Principal SRE / Full-Stack Engineer. Your primary directive is to maintain the architectural integrity of this multi-agent governance mesh.
 
-## 🏗️ Architecture Overview
+## 🏗️ The Tech Stack
+- **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS, `useSWR` for polling, `react-virtuoso` for virtualized rendering.
+- **Backend:** Python 3.11+, FastAPI (Microservices), HTTPX (Proxying), Pydantic.
+- **Infrastructure:** Docker Compose, PyInstaller (CLI).
 
-DeployMantis uses a **Governance Mesh** (Proxy/Gateway Pattern) to ensure all AI inference and agent actions are audited, sanitized, and budget-capped.
+## 🧭 Architectural Directives (CRITICAL)
+1. **The Gateway Pattern:** NEVER allow the frontend (`mantis-dash`) to communicate directly with microservices (`swarm-chaos`, `vault-guard`, `token-breaker`). ALL dashboard traffic MUST route through `core-api`.
+2. **Styling Strictness:** Do NOT hallucinate CSS or introduce new UI libraries (e.g., Material UI, Chakra). Use existing Tailwind globals (`--mantis-accent`, `glass-card`).
+3. **App Shell Routing:** The frontend uses a micro-frontend "App Shell" pattern. Do not modify `layout.tsx` for routing; utilize the `APP_REGISTRY` mapping in `page.tsx`.
 
-### Core Components
-- **`mantis-dash`**: Next.js dashboard providing a central "Root OS" view of all microservices.
-- **`core-api`**: The central gateway (FastAPI) that proxies requests to specialized services.
-- **`mantis-env`**: A Reinforcement Learning (RL) sandbox where agents are tested against complex topologies.
-- **`sdk`**: The Python client (`MantisClient`) used by agents to communicate with the ecosystem.
-- **`cli`**: A compiled binary for managing the suite from the terminal.
+## 📦 Core Component Map
+- `/mantis-dash`: The UI Control Plane. 
+- `/core-api`: FastAPI Gateway (Port 8000). Proxies config/telemetry.
+- `/swarm-chaos`: Fault injection engine (Port 5000). 
+- `/vault-guard`: Real-time PII redactor (Port 5001). 
+- `/token-breaker`: Financial circuit breaker/ledger (Port 5002).
+- `/cli`: Python Typer/PyInstaller binary source (`mantis start`).
 
-### Governance Services
-- **`Strata`**: Traffic instrumentation and log exporter.
-- **`SwarmChaos`**: Injects hallucinations, latency, and 5xx errors to test agent resilience.
-- **`VaultGuard`**: Real-time PII redactor using regex patterns to scrub sensitive data.
-- **`TokenBreaker`**: Financial circuit breaker that enforces strict budget caps on LLM usage.
+*(Note: Ignore and do not modify any legacy `aegis-*` or `dist/` build folders. Keep PRs focused only on the active microservices).*
 
-## 🚀 Existing Features
-- **Centralized Dashboard**: Real-time service health, budget tracking, and micro-app switching.
-- **Autonomous Fallback**: The `LLMGateway` automatically switches to local models (Ollama) if primary providers fail.
-- **Real-time Configuration**: Chaos injection rates and redaction rules can be updated live from the UI.
-- **Trace Replay**: Capture and replay traffic traces for debugging (via Strata).
+## 🐛 Known Bugs & Tech Debt (Do Not Attempt to Fix Without Prompting)
+- **In-Memory State:** `swarm-chaos`, `vault-guard`, and `token-breaker` currently use Python dictionaries in memory. Restarting the Docker containers resets the ledger and rules. *Do not add PostgreSQL or Redis unless explicitly instructed.*
+- **Windows Docker Pipes:** The `mantis start` CLI command occasionally fails on Windows if Docker Desktop WSL2 pipes are not fully initialized. 
+- **SWR Race Conditions:** Rapidly toggling switches in the SwarmChaos UI can occasionally desync with the SWR revalidation pulse.
 
-## 🛠️ Roadmap & "Next Steps"
-If you are tasked with extending DeployMantis, consider the following priorities:
-1. **Dynamic Rule Engine**: Move from static regex in VaultGuard to AI-powered PII detection.
-2. **Chaos Orchestration**: Allow SwarmChaos to target specific agent IDs rather than global injection.
-3. **Budget Forecasting**: Add predictive analytics to TokenBreaker to warn users before budget exhaustion.
-4. **Agent Benchmarking**: Integrate MantisEnv results into the dashboard to rank agent models by "Survival Score".
+## 🚀 Roadmap & Active Execution Tasks
+If you are tasked with extending DeployMantis, consult this prioritized list:
 
-## 📜 Global Tokens
-CSS tokens are prefixed with `--mantis-`.
-Environment variables: `MANTIS_ENV_PORT`, `CORE_API_PORT`, `STRATA_PORT`.
+**Phase 1: Intelligence Upgrade**
+- [ ] **Dynamic Rule Engine:** Upgrade `VaultGuard` from static regex to a lightweight NLP model (e.g., Presidio) for context-aware PII detection.
+- [ ] **Targeted Sabotage:** Modify `SwarmChaos` to accept a specific `agent_id` payload, allowing targeted fault injection rather than a global broadcast.
+
+**Phase 2: Analytics & Forecasting**
+- [ ] **Budget Forecasting:** Implement linear regression in `TokenBreaker` to estimate "Time to Budget Exhaustion" and expose a warning state to the UI.
+- [ ] **Survival Matrix:** Aggregate data from `mantis-env` to rank LLM models (GPT-4 vs. Claude 3 vs. Llama) based on their resilience to SwarmChaos events.
+
+**Phase 3: Persistence**
+- [ ] **Database Migration:** Replace the in-memory Python dictionaries with SQLite for the configuration state and ledger tracking.
 
 ---
-*Maintained by the DeployMantis Core Team.*
+*End of Context. Acknowledge these rules before generating code.*
