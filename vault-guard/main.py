@@ -4,6 +4,7 @@ from pydantic import BaseModel
 import httpx
 
 from scanner.redactor import redactor, RULES
+from scanner.secret_scanner import scan_for_secrets
 
 app = FastAPI(title="DeployMantis Reliability Suite - VaultGuard")
 
@@ -17,6 +18,83 @@ app.add_middleware(
 
 # Headers consumed at this hop
 _CONSUMED_HEADERS = {"host", "x-target-url", "content-length", "content-type", "transfer-encoding"}
+
+
+
+# ── Governance API ────────────────────────────────────────────
+
+class RuleToggle(BaseModel):
+    id: str
+    enabled: bool
+
+class TextPayload(BaseModel):
+    text: str
+
+@app.get("/api/rules")
+def get_rules():
+    """Return the current PII rule list (without compiled regex objects)."""
+    return [{"id": r["id"], "name": r["name"], "pattern": r["pattern"],
+             "replacement": r["replacement"], "enabled": r["enabled"]} for r in RULES]
+
+@app.put("/api/rules")
+def update_rules(toggles: list[RuleToggle]):
+    """Enable/disable rules by id."""
+    toggle_map = {t.id: t.enabled for t in toggles}
+    for rule in RULES:
+        if rule["id"] in toggle_map:
+            rule["enabled"] = toggle_map[rule["id"]]
+    return {"status": "updated", "rules": get_rules()}
+
+@app.post("/api/test-redaction")
+def test_redaction(payload: TextPayload):
+    """Run the text through the live redactor and return the scrubbed result."""
+    scrubbed = redactor.redact_string(payload.text)
+    return {"original": payload.text, "scrubbed": scrubbed}
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "vault-guard"}
+
+
+# ── Secret Scanning endpoint ────────────────────────────────
+
+class ScanRequest(BaseModel):
+    content: str
+    context: str = "code"   # "code" | "logs" | "config"
+
+
+@app.post("/scan")
+def scan_secrets(payload: ScanRequest):
+    """
+    Scan arbitrary text for embedded secrets.
+
+    Returns a list of Finding dicts (kind, match, location, summary).
+    Raw secret values are NEVER logged or returned — only masked forms.
+    """
+    import logging
+    log = logging.getLogger("deploymantis.vault_guard")
+
+    findings = scan_for_secrets(payload.content)
+
+    # Log counts only — never log raw content or matched values
+    log.info(
+        "vault-guard /scan: context=%s lines=%d findings=%d",
+        payload.context,
+        len(payload.content.splitlines()),
+        len(findings),
+    )
+
+    return {
+        "findings": [
+            {
+                "kind":     f.kind,
+                "match":    f.match,
+                "location": f.location,
+                "summary":  f.summary,
+            }
+            for f in findings
+        ]
+    }
 
 @app.api_route("/{path:path}", methods=["POST", "PUT", "PATCH"])
 async def proxy_post(request: Request, path: str):
@@ -73,40 +151,6 @@ async def proxy_post(request: Request, path: str):
         headers=dict(resp.headers)
     )
 
-# ── Governance API ────────────────────────────────────────────
-
-class RuleToggle(BaseModel):
-    id: str
-    enabled: bool
-
-class TextPayload(BaseModel):
-    text: str
-
-@app.get("/api/rules")
-def get_rules():
-    """Return the current PII rule list (without compiled regex objects)."""
-    return [{"id": r["id"], "name": r["name"], "pattern": r["pattern"],
-             "replacement": r["replacement"], "enabled": r["enabled"]} for r in RULES]
-
-@app.put("/api/rules")
-def update_rules(toggles: list[RuleToggle]):
-    """Enable/disable rules by id."""
-    toggle_map = {t.id: t.enabled for t in toggles}
-    for rule in RULES:
-        if rule["id"] in toggle_map:
-            rule["enabled"] = toggle_map[rule["id"]]
-    return {"status": "updated", "rules": get_rules()}
-
-@app.post("/api/test-redaction")
-def test_redaction(payload: TextPayload):
-    """Run the text through the live redactor and return the scrubbed result."""
-    scrubbed = redactor.redact_string(payload.text)
-    return {"original": payload.text, "scrubbed": scrubbed}
-
-@app.get("/health")
-def health_check():
-    return {"status": "ok", "service": "vault-guard"}
-
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=5001, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=5001, reload=False)

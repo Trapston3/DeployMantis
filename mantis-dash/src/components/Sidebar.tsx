@@ -12,7 +12,12 @@ import {
   RotateCw,
   Play,
   Loader2,
+  Camera,
+  CreditCard,
+  Monitor,
 } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
 
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useSettings, AppId } from "./SettingsContext";
@@ -87,6 +92,8 @@ export default function Sidebar() {
   const [loadingSvc, setLoadingSvc] = useState<string | null>(null);
 
   const { activeApp, setActiveApp } = useSettings();
+  const pathname = usePathname();
+  const router = useRouter();
 
   const services: ServiceInfo[] = statusData?.services || [];
   const budget = ledgerData?.budget || 1.0;
@@ -135,14 +142,20 @@ export default function Sidebar() {
               { id: "swarm-chaos", label: "SwarmChaos", icon: Network },
               { id: "vault-guard", label: "VaultGuard", icon: Shield },
               { id: "token-breaker", label: "TokenBreaker", icon: Banknote },
+              { id: "mantis-snap", label: "MantisSnap", icon: Camera },
             ].map((app) => {
               const Icon = app.icon;
-              const isActive = activeApp === app.id;
+              const isActive = pathname === "/" && activeApp === app.id;
               return (
                 <li key={app.id}>
                   <button
-                    onClick={() => setActiveApp(app.id as AppId)}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-200 ${
+                    onClick={() => {
+                      setActiveApp(app.id as AppId);
+                      if (pathname !== "/") {
+                        router.push("/");
+                      }
+                    }}
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-200 cursor-pointer ${
                       isActive
                         ? "bg-[var(--accent)]/15 border-l-2 border-l-[var(--accent)] text-[var(--accent)] glass-subtle shadow-[inset_0_0_20px_rgba(138,154,134,0.1)]"
                         : "glass-subtle text-[var(--foreground)] hover:bg-white/[0.03] border-l-2 border-l-transparent"
@@ -154,6 +167,21 @@ export default function Sidebar() {
                 </li>
               );
             })}
+            
+            {/* Billing Navigation */}
+            <li>
+              <Link
+                href="/billing"
+                className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-all duration-200 ${
+                  pathname === "/billing"
+                    ? "bg-[var(--accent)]/15 border-l-2 border-l-[var(--accent)] text-[var(--accent)] glass-subtle shadow-[inset_0_0_20px_rgba(138,154,134,0.1)]"
+                    : "glass-subtle text-[var(--foreground)] hover:bg-white/[0.03] border-l-2 border-l-transparent"
+                }`}
+              >
+                <CreditCard className={`w-3.5 h-3.5 ${pathname === "/billing" ? "text-[var(--accent)]" : "text-[var(--deploymantis-text-muted)]"}`} />
+                <span className="text-sm font-medium">Billing & Tiers</span>
+              </Link>
+            </li>
           </ul>
         </div>
 

@@ -37,12 +37,98 @@ class LLMGateway:
     async def generate(self, prompt: str, system_prompt: str = "") -> str:
         self._recovered = False
 
+        if os.getenv("MOCK_LLM", "false").lower() == "true":
+            return self._generate_mock(prompt, system_prompt)
+
         if INFERENCE_PROVIDER == "ollama":
             return await self._generate_ollama(prompt, system_prompt)
         elif INFERENCE_PROVIDER == "huggingface":
             return await self._generate_huggingface_with_recovery(prompt, system_prompt)
         else:
             raise ValueError(f"Unknown inference provider: {INFERENCE_PROVIDER}")
+
+    def _generate_mock(self, prompt: str, system_prompt: str) -> str:
+        p_lower = prompt.lower()
+        
+        # 1. Secret Flow
+        if any(w in p_lower for w in ("secret", "credential", "password", "key", "token", "aws")):
+            return (
+                "Here is the database and AWS configuration:\n\n"
+                "```python\n"
+                "AWS_SECRET_KEY = \"AKIAIOSFODNN7EXAMPLE\"\n"
+                "DB_CONN = \"postgresql://admin:super_secret_password_123@localhost:5432/db\"\n"
+                "```\n"
+            )
+            
+        # 2. Style-aware Code Generation Flow
+        # Check system prompt style constraints
+        fn_style = "snake_case"
+        if "functions use camelCase" in system_prompt:
+            fn_style = "camelCase"
+        elif "functions use PascalCase" in system_prompt:
+            fn_style = "PascalCase"
+
+        doc_style = "google"
+        if "sphinx-style" in system_prompt:
+            doc_style = "sphinx"
+            
+        if fn_style == "camelCase":
+            fn_name = "calculateSum"
+            p1, p2 = "firstVal", "secondVal"
+        elif fn_style == "PascalCase":
+            fn_name = "CalculateSum"
+            p1, p2 = "FirstVal", "SecondVal"
+        else:
+            fn_name = "calculate_sum"
+            p1, p2 = "first_val", "second_val"
+
+        if doc_style == "sphinx":
+            doc = (
+                f"    \"\"\"Calculate sum.\n\n"
+                f"    :param {p1}: First value.\n"
+                f"    :param {p2}: Second value.\n"
+                f"    :returns: The result.\n"
+                f"    \"\"\""
+            )
+        else:
+            doc = (
+                f"    \"\"\"Calculate sum.\n\n"
+                f"    Args:\n"
+                f"        {p1}: First value.\n"
+                f"        {p2}: Second value.\n\n"
+                f"    Returns:\n"
+                f"        The result.\n"
+                f"    \"\"\""
+            )
+
+        code_block = (
+            f"def {fn_name}({p1}, {p2}):\n"
+            f"{doc}\n"
+            f"    return {p1} + {p2}"
+        )
+        
+        diff_block = (
+            f"diff --git a/math_utils.py b/math_utils.py\n"
+            f"--- a/math_utils.py\n"
+            f"+++ b/math_utils.py\n"
+            f"@@ -1,3 +1,6 @@\n"
+            f"-def old_sum(x, y):\n"
+            f"-    return x + y\n"
+            f"+def {fn_name}({p1}, {p2}):\n"
+            f"+{doc}\n"
+            f"+    return {p1} + {p2}"
+        )
+        
+        return (
+            f"Here is the code matching the requested profile:\n\n"
+            f"```python\n"
+            f"{code_block}\n"
+            f"```\n\n"
+            f"And here is the patch/diff file:\n\n"
+            f"```diff\n"
+            f"{diff_block}\n"
+            f"```\n"
+        )
 
     # ── Ollama (Local) ────────────────────────────────────────
 

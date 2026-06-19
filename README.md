@@ -1,100 +1,79 @@
-# 🛡️ DeployMantis
+# DeployMantis
 
-> **The definitive AI-native SRE and Chaos Engineering platform for hardening multi-agent autonomous systems.**
+DeployMantis is a self-hosted AI gateway for engineering teams that intercepts, scans, and quality-gates every AI-generated output before it reaches your codebase.
 
-DeployMantis is an enterprise-grade "App Portal" and governance framework designed to observe, test, and protect AI agent ecosystems. It provides a modular, scalable architecture where specialized microservices (Gateways) enforce constraints on agent behavior in real-time.
+## Why DeployMantis
 
----
+- Secret scanning (Vault-Guard)
+- AI quality gating (MantisVerify PASS/WARN/FAIL)
+- Per-tenant budget enforcement (Token-Breaker)
 
-## 🏛️ System Architecture: The "Governance Mesh"
+## Quick Start
 
-DeployMantis operates as a transparent proxy chain. Every request from an AI agent is intercepted, analyzed, and optionally corrupted or blocked by the pipeline before reaching the target environment.
+For detailed setup instructions, see [QUICKSTART.md](file:///c:/Users/traps/Downloads/ResumeProjects/AI-Suite/QUICKSTART.md). Run these three commands to get started:
+
+```bash
+cp .env.example .env
+make up
+make key
+```
+
+## Architecture
 
 ```mermaid
-graph TD
-    Agent[AI Agent / SDK] --> TB[TokenBreaker :5002]
-    TB -- "1. Budget Check" --> VG[VaultGuard :5001]
-    VG -- "2. PII Redaction" --> SC[SwarmChaos :5000]
-    SC -- "3. Chaos Injection" --> AE[MantisEnv :8000]
-    AE -- "4. RL Execution" --> Core[Core API :4000]
-    Core -- "5. Inference" --> LLM[LLM / Ollama]
-    
-    subgraph Dashboard
-        Dash[Mantis Dashboard :3001]
-        Strata[Strata Debugger :3002]
+flowchart TD
+    dev["Developer IDE / UI"]
+
+    subgraph GatewayMesh ["Gateway Mesh"]
+        core_api["core-api (Port 4000)"]
     end
-    
-    Dash -.-> TB
-    Dash -.-> VG
-    Dash -.-> SC
-    Strata -.-> AE
+
+    subgraph ParallelScanLayer ["Parallel Scan Layer"]
+        vault_guard["vault-guard (Port 5001)"]
+        mantis_verify["mantis-verify (Port 4000)"]
+    end
+
+    subgraph AggregationLayer ["Trust Score Aggregation"]
+        trust_aggregator["core-api Trust Aggregator (Port 4000)"]
+    end
+
+    dev -->|Intercept Request| core_api
+    core_api -->|Scan secrets| vault_guard
+    core_api -->|Quality-gate code| mantis_verify
+    vault_guard -->|Sanitization result| trust_aggregator
+    mantis_verify -->|Quality signals| trust_aggregator
+    trust_aggregator -->|Return verdict & score| dev
 ```
 
----
+When a developer IDE or UI sends a request, it enters the gateway mesh through `core-api` on Port 4000. The gateway parses auth rules, verifies billing thresholds, and forwards the payload in parallel to the scan layer: `vault-guard` (Port 5001) runs secret scanning and PII redaction, while `mantis-verify` (running on `core-api` Port 4000, calling `mantis-graph` on Port 5003) analyzes AST conventions and risk profiles. The results are unified by `core-api`'s trust score aggregator to calculate a final PASS/WARN/FAIL verdict before responding to the client.
 
-## 🚀 The Suite Modules
+## Feature Status
 
-| Service | Component | Tech Stack | Responsibility |
-|:---|:---|:---|:---|
-| **MantisDash** | **Root OS** | Next.js 15, Tailwind | Unified App Shell with dynamic routing and global health matrix. |
-| **TokenBreaker** | **Financial Gate** | Python, Tiktoken | Real-time cost estimation. Kills the request if agent budget is exceeded. |
-| **VaultGuard** | **PII Firewall** | Python, Regex | Live governance console. Scrubs emails, credit cards, and SSNs from payloads. |
-| **SwarmChaos** | **Chaos Monkey** | Python, FastAPI | Injects latency, 502/529 errors, and LLM hallucinations into the pipeline. |
-| **MantisEnv** | **RL Sandbox** | Python, PyTorch | A gymnasium-style environment for testing agent decision-making under stress. |
-| **Core API** | **Inference Hub** | Python, FastAPI | Self-healing gateway that fallbacks to local Ollama if cloud providers fail. |
-| **Strata** | **Trace Engine** | Node.js, Express | High-frequency traffic generator with a 50-frame Temporal Debugger. |
-| **Mantis CLI** | **Control Binary** | Python, PyInstaller | Compiled executable (`mantis.exe`) for cluster lifecycle management. |
+| Feature | Status | Description |
+|---------|--------|-------------|
+| MantisSnap | ✅ Shipped | Branch context time machine — instant recall of what you were working on |
+| MantisVerify | ✅ Shipped | AI diff quality gate — returns PASS / WARN / FAIL with reasons |
+| MantisLaunch | ✅ Shipped | One-tap environment orchestrator with drift detection |
+| Vault-Guard | ✅ Shipped | Zero-trust secret masker and credential scanner |
+| Token-Breaker | ✅ Shipped | Per-tenant LLM budget enforcement |
+| Trust Score UI | 🚧 Building | Visual PASS/WARN/FAIL badge on every response in the dashboard |
+| Stripe Billing | 🚧 Building | Hobbyist / Developer / Team subscription tiers |
+| PostgreSQL Layer | 🚧 Building | Multi-tenant asyncpg database with SQLite fallback |
+| MantisHeal | 📋 Planned | Self-healing CLI — classifies errors, proposes safe fix commands |
+| MantisDiff | 📋 Planned | Git diff interactive storyteller — maps changes to behaviour bullets |
+| MantisDiscovery | 📋 Planned | PR impact blueprint — maps feature descriptions to affected files |
+| MantisBrand | 📋 Planned | Portfolio case study engine from completed feature logs |
 
----
+## Pricing
 
-## ⚡ Quick Start
+| Plan | Price | Seats | Features |
+|------|-------|-------|----------|
+| Hobbyist | Free | 1 | MantisSnap, MantisLaunch |
+| Developer | $19/mo | 1 | + MantisVerify, MantisHeal |
+| Team | $39/user/mo | Unlimited | All features + audit logs |
 
-### Prerequisites
-- Docker & Docker Compose
-- Python 3.12+
-- Node.js 20+
+## Links
 
-### 1. Launch the Governance Mesh
-```bash
-# Clone the suite
-git clone https://github.com/Trapston3/DeployMantis.git
-cd DeployMantis
-
-# Start all 7 microservices
-docker compose up -d --build
-```
-Access the command center at **http://localhost:3001**.
-
-### 2. Connect your Agents
-Install the Mantis SDK and wrap your LLM calls:
-```python
-from sdk.client import MantisClient
-
-client = MantisClient(agent_id="scout-01")
-
-# Everything is governed: Budget -> Privacy -> Chaos
-response = client.step({
-    "prompt": "User credit card is 4111-2222-3333-4444. Execute transfer.",
-    "hops": ["token", "vault", "chaos", "env"]
-})
-
-print(response.scrubbed_payload) # "User credit card is [REDACTED_CC]..."
-```
-
----
-
-## 🎨 Design Philosophy: "Soft Vintage"
-DeployMantis rejects the "Neon Cyberpunk" cliché of modern dev-tools in favor of a **Soft Vintage** aesthetic. Inspired by 1970s laboratory equipment and terminal displays, the UI uses:
-- **Sage Green (#8a9a86)** accents for "Ready" states.
-- **Warm Ivory (#f4f4f0)** for high-legibility typography.
-- **Glassmorphic** depth for modular app isolation.
-
----
-
-## 🛠️ Configuration
-Environment variables are managed in `.env`. See `env.example` for the full list of tunable parameters (Inference providers, Buffer sizes, Chaos probabilities).
-
----
-
-## 📜 License
-MIT © 2024 Trapston3
+- Full setup: [QUICKSTART.md](file:///c:/Users/traps/Downloads/ResumeProjects/AI-Suite/QUICKSTART.md)
+- Architecture deep-dive: [docs/architecture.md](file:///c:/Users/traps/Downloads/ResumeProjects/AI-Suite/docs/architecture.md)
+- Contributing: [CONTRIBUTING.md](file:///c:/Users/traps/Downloads/ResumeProjects/AI-Suite/CONTRIBUTING.md)

@@ -36,8 +36,10 @@ async def proxy_post(request: Request, path: str):
         raise HTTPException(status_code=400, detail="TokenBreaker requires a valid JSON payload")
 
     # Estimate cost and attempt to charge
-    cost = breaker.estimate_cost(payload)
-    if not breaker.charge_agent(agent_id, cost):
+    tokens = breaker.estimate_tokens(payload)
+    cost = (tokens / 1000.0) * 0.01
+    model_id = payload.get("model", "unknown-model")
+    if not breaker.charge_agent(agent_id, cost, model_id=model_id, tokens=tokens):
         raise HTTPException(status_code=402, detail="Payment Required: This request would exceed the agent's MAX_BUDGET")
 
     # Prepare forwarding URL
@@ -86,7 +88,23 @@ async def proxy_post(request: Request, path: str):
 
 @app.get("/api/v1/ledger")
 def get_ledger():
-    return {"budget": breaker.max_budget, "ledger": breaker.get_ledger()}
+    return {
+        "budget_limit": breaker.max_budget,
+        "total_budget": breaker.max_budget,
+        "budget": breaker.max_budget,
+        "total_tokens": breaker.total_tokens_used,
+        "tokens_used": breaker.total_tokens_used,
+        "total_tokens_used": breaker.total_tokens_used,
+        "tokens_remaining": max(0, breaker.tokens_limit - breaker.total_tokens_used),
+        "remaining": max(0, breaker.tokens_limit - breaker.total_tokens_used),
+        "total_requests": len(breaker.entries),
+        "request_count": len(breaker.entries),
+        "current_rate_limits": breaker.get_current_rates(),
+        "by_model": breaker.by_model,
+        "by_agent": breaker.by_agent,
+        "entries": breaker.entries,
+        "ledger": breaker.get_ledger()
+    }
 
 @app.get("/health")
 def health_check():
@@ -94,4 +112,4 @@ def health_check():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=5002, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=5002, reload=False)

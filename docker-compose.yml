@@ -1,81 +1,384 @@
+# ============================================================
+#  DeployMantis – Production Compose
+#  Single command: docker compose up --build -d
+#
+#  Networking: all inter-service calls use container names as
+#  hostnames on the deploymantis-net bridge.  Never localhost.
+#  Secrets: zero hard-coded values — every secret comes from
+#  the .env file (see .env.example for required variables).
+# ============================================================
 
+networks:
+  deploymantis-net:
+    driver: bridge
+
+volumes:
+  strata-data:
+  core-api-data:
+  vault-guard-data:
+  token-breaker-data:
+  mantis-graph-data:
+  swarm-chaos-data:
+  fallback-mesh-data:
+  mantis-env-data:
+  odysseus-data:
+  odysseus-chroma:
+  pg-data:
 
 services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────
+  # Shared relational store for core-api (auth, billing, snap, launch).
+  # Set IS_SQLITE=true in .env to bypass this and use embedded SQLite instead.
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
+    environment:
+      POSTGRES_DB:       "${POSTGRES_DB:-deploymantis}"
+      POSTGRES_USER:     "${POSTGRES_USER:-mantis}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mantis} -d ${POSTGRES_DB:-deploymantis}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── Strata ─────────────────────────────────────────────────
+  # Traffic instrumentation, log exporter, and SSE event bus.
+  # Exposes: 3000 (HTTP UI), 3002 (SSE / ingest)
   strata:
     build:
-      context: ./strata
-    ports:
+      context: ./Strata
+      dockerfile: Dockerfile
+    image: deploymantis/strata:latest
     container_name: strata
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
     ports:
-      - "3002:3002"
+      - "${STRATA_PORT:-3002}:3002"
+      - "3000:3000"
     environment:
-      - PORT=3000
-      - HOST=0.0.0.0
-      - LOG_LEVEL=info
-      - STRATA_BUFFER_SIZE=${STRATA_BUFFER_SIZE:-50}
+      PORT: "3000"
+      SSE_PORT: "3002"
+      HOST: "0.0.0.0"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      STRATA_BUFFER_SIZE: "${STRATA_BUFFER_SIZE:-50}"
+    volumes:
+      - strata-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000/health', r => process.exit(r.statusCode === 200 ? 0 : 1))\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
-  mantis-env:
-    build:
-      context: ./mantis-env
-    container_name: mantis-env
-    ports:
-      - "8000:8000"
-    environment:
-      - CORE_API_URL=http://core-api:4000
-
+  # ── Core API ───────────────────────────────────────────────
+  # Central governance gateway.  All agents route through here.
+  # Depends on: strata (log shipping)
   core-api:
     build:
       context: ./core-api
+      dockerfile: Dockerfile
+    image: deploymantis/core-api:latest
     container_name: core-api
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
     ports:
-      - "4000:4000"
+      - "${CORE_API_PORT:-4000}:4000"
+    environment:
+      # Database — asyncpg/PostgreSQL (IS_SQLITE=true to use embedded SQLite)
+      DATABASE_URL: "postgresql://${POSTGRES_USER:-mantis}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-deploymantis}"
+      IS_SQLITE: "${IS_SQLITE:-false}"
+      # Internal service URLs — use container names, NOT localhost
+      STRATA_URL: "http://strata:3002"
+      MANTIS_ENV_URL: "http://mantis-env:8000"
+      VAULT_GUARD_URL: "http://vault-guard:5001"
+      TOKEN_BREAKER_URL: "http://token-breaker:5002"
+      MANTIS_GRAPH_URL: "http://mantis-graph:5003"
+      SWARM_CHAOS_URL: "http://swarm-chaos:5000"
+      FALLBACK_MESH_URL: "http://fallback-mesh:5004"
+      ODYSSEUS_URL: "http://odysseus:7000"
+      # Provider config (from .env)
+      INFERENCE_PROVIDER: "${INFERENCE_PROVIDER:-ollama}"
+      CUSTOM_MODEL_NAME: "${CUSTOM_MODEL_NAME:-llama3.2}"
+      OLLAMA_HOST: "${OLLAMA_HOST:-http://host.docker.internal:11434}"
+      HUGGINGFACE_API_KEY: "${HUGGINGFACE_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      MANTIS_API_KEY: "${MANTIS_API_KEY:-}"
     volumes:
-      - //var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - STRATA_URL=http://strata:3002
-      - MANTIS_ENV_URL=http://mantis-env:8000
-      - CUSTOM_MODEL_NAME=${CUSTOM_MODEL_NAME:-llama3.2}
-      - INFERENCE_PROVIDER=${INFERENCE_PROVIDER:-ollama}
+      - core-api-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
-      - strata
-      - mantis-env
+      postgres:
+        condition: service_healthy
+      strata:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:4000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-  swarm-chaos:
-    build:
-      context: ./swarm-chaos
-    container_name: swarm-chaos
-    ports:
-      - "5000:5000"
-    environment:
-      - CORE_API_URL=http://core-api:4000
-      - CHAOS_PROBABILITY=${CHAOS_PROBABILITY:-0.2}
-    depends_on:
-      - core-api
-
+  # ── VaultGuard ─────────────────────────────────────────────
+  # Real-time PII redactor.  Sits in front of all LLM traffic.
   vault-guard:
     build:
       context: ./vault-guard
+      dockerfile: Dockerfile
+    image: deploymantis/vault-guard:latest
     container_name: vault-guard
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
     ports:
       - "5001:5001"
+    environment:
+      CORE_API_URL: "http://core-api:4000"
+      VAULT_STRICT_MODE: "${VAULT_STRICT_MODE:-false}"
+      MANTIS_API_KEY: "${MANTIS_API_KEY:-}"
+    volumes:
+      - vault-guard-data:/data
+    depends_on:
+      core-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:5001/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
+  # ── TokenBreaker ───────────────────────────────────────────
+  # Financial circuit breaker: enforces per-org budget caps.
   token-breaker:
     build:
       context: ./token-breaker
+      dockerfile: Dockerfile
+    image: deploymantis/token-breaker:latest
     container_name: token-breaker
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
     ports:
       - "5002:5002"
     environment:
-      - MAX_BUDGET=${MAX_BUDGET:-1.00}
+      CORE_API_URL: "http://core-api:4000"
+      MAX_BUDGET: "${MAX_BUDGET:-1.00}"
+      BUDGET_WINDOW_HOURS: "${BUDGET_WINDOW_HOURS:-24}"
+      MANTIS_API_KEY: "${MANTIS_API_KEY:-}"
+    volumes:
+      - token-breaker-data:/data
+    depends_on:
+      core-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:5002/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
+  # ── MantisGraph ────────────────────────────────────────────
+  # Agent dependency graph, style profiler, and verifier.
+  mantis-graph:
+    build:
+      context: ./mantis-graph
+      dockerfile: Dockerfile
+    image: deploymantis/mantis-graph:latest
+    container_name: mantis-graph
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
+    ports:
+      - "5003:5003"
+    environment:
+      CORE_API_URL: "http://core-api:4000"
+      MANTIS_API_KEY: "${MANTIS_API_KEY:-}"
+    volumes:
+      - mantis-graph-data:/data
+    depends_on:
+      core-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:5003/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── SwarmChaos ─────────────────────────────────────────────
+  # Chaos injection: hallucinations, latency, 5xx errors.
+  swarm-chaos:
+    build:
+      context: ./swarm-chaos
+      dockerfile: Dockerfile
+    image: deploymantis/swarm-chaos:latest
+    container_name: swarm-chaos
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
+    ports:
+      - "5000:5000"
+    environment:
+      CORE_API_URL: "http://core-api:4000"
+      CHAOS_PROBABILITY: "${CHAOS_PROBABILITY:-0.05}"
+      LATENCY_MS_MAX: "${LATENCY_MS_MAX:-2000}"
+      MANTIS_API_KEY: "${MANTIS_API_KEY:-}"
+    volumes:
+      - swarm-chaos-data:/data
+    depends_on:
+      core-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:5000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── FallbackMesh ───────────────────────────────────────────
+  # LLM Gateway with automatic fallback to Ollama local models.
+  fallback-mesh:
+    build:
+      context: ./fallback-mesh
+      dockerfile: Dockerfile
+    image: deploymantis/fallback-mesh:latest
+    container_name: fallback-mesh
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
+    ports:
+      - "5004:5004"
+    environment:
+      CORE_API_URL: "http://core-api:4000"
+      OLLAMA_HOST: "${OLLAMA_HOST:-http://host.docker.internal:11434}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      HUGGINGFACE_API_KEY: "${HUGGINGFACE_API_KEY:-}"
+      FALLBACK_MODEL: "${FALLBACK_MODEL:-llama3.2}"
+      MANTIS_API_KEY: "${MANTIS_API_KEY:-}"
+    volumes:
+      - fallback-mesh-data:/data
+    depends_on:
+      core-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:5004/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # ── MantisEnv ──────────────────────────────────────────────
+  # RL sandbox: chaos topology testing and agent benchmarking.
+  mantis-env:
+    build:
+      context: ./mantis-env
+      dockerfile: Dockerfile
+    image: deploymantis/mantis-env:latest
+    container_name: mantis-env
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
+    ports:
+      - "${MANTIS_ENV_PORT:-8000}:8000"
+    environment:
+      CORE_API_URL: "http://core-api:4000"
+      MANTIS_API_KEY: "${MANTIS_API_KEY:-}"
+    volumes:
+      - mantis-env-data:/data
+    depends_on:
+      core-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # ── Odysseus ───────────────────────────────────────────────
+  # Main AI agent application (FastAPI + ChromaDB vector store).
+  odysseus:
+    build:
+      context: ./odysseus
+      dockerfile: Dockerfile
+    image: deploymantis/odysseus:latest
+    container_name: odysseus
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
+    ports:
+      - "7000:7000"
+    environment:
+      # Internal mesh URLs — container hostnames
+      CORE_API_URL: "http://core-api:4000"
+      VAULT_GUARD_URL: "http://vault-guard:5001"
+      TOKEN_BREAKER_URL: "http://token-breaker:5002"
+      FALLBACK_MESH_URL: "http://fallback-mesh:5004"
+      STRATA_URL: "http://strata:3002"
+      # ChromaDB: uses embedded client (odysseus-chroma volume)
+      CHROMA_PATH: "/chroma"
+      # LLM provider keys
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      HUGGINGFACE_API_KEY: "${HUGGINGFACE_API_KEY:-}"
+      OLLAMA_HOST: "${OLLAMA_HOST:-http://host.docker.internal:11434}"
+      INFERENCE_PROVIDER: "${INFERENCE_PROVIDER:-ollama}"
+      CUSTOM_MODEL_NAME: "${CUSTOM_MODEL_NAME:-llama3.2}"
+      MANTIS_API_KEY: "${MANTIS_API_KEY:-}"
+      SECRET_KEY: "${SECRET_KEY:-changeme-in-production}"
+    volumes:
+      - odysseus-data:/app/data
+      - odysseus-chroma:/chroma
+    depends_on:
+      core-api:
+        condition: service_healthy
+      fallback-mesh:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:7000/health')\""]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # ── MantisDash ─────────────────────────────────────────────
+  # Next.js control-plane dashboard (Root OS view).
+  # NEXT_PUBLIC_* vars are baked at build time — set before `make up`.
   mantis-dash:
     build:
       context: ./mantis-dash
       dockerfile: Dockerfile
+    image: deploymantis/mantis-dash:latest
     container_name: mantis-dash
+    restart: unless-stopped
+    networks:
+      - deploymantis-net
     ports:
       - "3001:3000"
     environment:
-      - NEXT_PUBLIC_CORE_API_URL=http://localhost:4000
+      # Browser-side: must point to the host-exposed port, not internal
+      NEXT_PUBLIC_CORE_API_URL: "${NEXT_PUBLIC_CORE_API_URL:-http://localhost:4000}"
+      NEXT_PUBLIC_STRATA_URL: "${NEXT_PUBLIC_STRATA_URL:-http://localhost:3002}"
+      NEXT_PUBLIC_ODYSSEUS_URL: "${NEXT_PUBLIC_ODYSSEUS_URL:-http://localhost:7000}"
+      NEXT_TELEMETRY_DISABLED: "1"
     depends_on:
-      - core-api
+      core-api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:3000', r => process.exit(r.statusCode < 500 ? 0 : 1))\""]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+      start_period: 60s

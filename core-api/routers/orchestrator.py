@@ -25,6 +25,7 @@ _SERVICES = {
     "vault-guard":   {"url": "http://vault-guard:5001",   "container": "ai-suite-vault-guard-1"},
     "token-breaker": {"url": "http://token-breaker:5002", "container": "ai-suite-token-breaker-1"},
     "deploymantis-dash":    {"url": "http://deploymantis-dash:3000",    "container": "ai-suite-deploymantis-dash-1"},
+    "mantis-graph":  {"url": "http://mantis-graph:5003",  "container": "ai-suite-mantis-graph-1"},
 }
 
 # ── Health Probing (lightweight — no Docker SDK dependency) ───

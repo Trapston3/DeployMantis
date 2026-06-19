@@ -10,6 +10,206 @@ import JsonViewer from "./JsonViewer";
 const CORE_API_URL = process.env.NEXT_PUBLIC_CORE_API_URL || "http://localhost:4000";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
+const guardrailRequestCache = new Map<string, any>();
+
+const extractDiff = (text: string): string | null => {
+  if (!text) return null;
+  // Prioritise explicit diff blocks
+  const diffMatch = text.match(/```diff\n([\s\S]*?)\n```/);
+  if (diffMatch) return diffMatch[1].trim();
+  const match = text.match(/```(?:[\w-]+)?\n([\s\S]*?)\n```/);
+  if (match) {
+    const content = match[1].trim();
+    if (content.includes("---") && content.includes("+++")) {
+      return content;
+    }
+  }
+  if (text.includes("---") && text.includes("+++")) {
+    const lines = text.split("\n");
+    const diffLines = [];
+    let inDiff = false;
+    for (const line of lines) {
+      if (line.startsWith("--- ") || line.startsWith("+++ ")) {
+        inDiff = true;
+      }
+      if (inDiff) {
+        diffLines.push(line);
+      }
+    }
+    if (diffLines.length > 0) return diffLines.join("\n");
+  }
+  return null;
+};
+
+function GuardrailBadges({ frame }: { frame: any }) {
+  const [guardVerdict, setGuardVerdict] = useState<any>(null);
+  const [verifyVerdict, setVerifyVerdict] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const responseText = frame.body?.response || frame.response || frame.meta?.response;
+
+  useEffect(() => {
+    // 1. If frame contains pre-computed results from Part 2, use them immediately
+    if (frame.body?.mantis_guard) {
+      setGuardVerdict(frame.body.mantis_guard);
+      if (frame.body.mantis_verify) {
+        setVerifyVerdict(frame.body.mantis_verify);
+      }
+      return;
+    }
+
+    if (!responseText) return;
+
+    // 2. Otherwise query them dynamically on demand once per frame
+    const cacheKey = frame.id || String(frame.timestamp);
+    if (guardrailRequestCache.has(cacheKey)) {
+      const cached = guardrailRequestCache.get(cacheKey);
+      setGuardVerdict(cached.guard);
+      setVerifyVerdict(cached.verify);
+      setError(cached.error || false);
+      setLoading(cached.loading || false);
+      return;
+    }
+
+    let active = true;
+    async function fetchVerdicts() {
+      setLoading(true);
+      setError(false);
+      guardrailRequestCache.set(cacheKey, { loading: true });
+
+      try {
+        const diff = extractDiff(responseText);
+        const context = frame.path?.includes("generate") ? "code" : "logs";
+
+        const guardRes = await fetch(`${CORE_API_URL}/api/v1/mantis-guard`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: responseText,
+            diff: diff || undefined,
+            language: "python",
+            context
+          })
+        });
+        if (!guardRes.ok) throw new Error("Guard failed");
+        const guardData = await guardRes.json();
+
+        let verifyData = null;
+        if (diff) {
+          const verifyRes = await fetch(`${CORE_API_URL}/api/v1/mantis-verify`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              diff,
+              language: "python"
+            })
+          });
+          if (verifyRes.ok) {
+            verifyData = await verifyRes.json();
+          }
+        }
+
+        if (active) {
+          setGuardVerdict(guardData);
+          setVerifyVerdict(verifyData);
+          guardrailRequestCache.set(cacheKey, { guard: guardData, verify: verifyData, loading: false });
+        }
+      } catch (err) {
+        console.error("Failed to fetch guardrail verdicts:", err);
+        if (active) {
+          setError(true);
+          guardrailRequestCache.set(cacheKey, { error: true, loading: false });
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchVerdicts();
+    return () => {
+      active = false;
+    };
+  }, [frame, responseText]);
+
+  if (!responseText) return null;
+
+  if (loading) {
+    return (
+      <span className="text-[9px] uppercase font-bold tracking-widest text-[var(--deploymantis-text-muted)] animate-pulse ml-2">
+        Checking...
+      </span>
+    );
+  }
+
+  if (error) {
+    return (
+      <span 
+        className="inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-widest bg-gray-500/10 text-gray-400 border border-gray-500/20 ml-2 select-none"
+        title="Guardrail services are unreachable or returned an error"
+      >
+        Guardrail unavailable
+      </span>
+    );
+  }
+
+  if (!guardVerdict) return null;
+
+  const getGuardClass = (status: string) => {
+    switch (status) {
+      case "SAFE":
+        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+      case "REVIEW":
+        return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+      case "BLOCKED":
+        return "bg-red-500/10 text-red-400 border-red-500/20";
+      default:
+        return "bg-gray-500/10 text-gray-400 border-gray-500/20";
+    }
+  };
+
+  const getVerifyClass = (status: string) => {
+    switch (status) {
+      case "PASS":
+        return "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+      case "WARN":
+        return "bg-amber-500/10 text-amber-400 border-amber-500/20";
+      case "FAIL":
+        return "bg-red-500/10 text-red-400 border-red-500/20";
+      default:
+        return "bg-gray-500/10 text-gray-400 border-gray-500/20";
+    }
+  };
+
+  const firstReason = guardVerdict.reasons?.[0] || "No findings";
+  const secretsCount = guardVerdict.secret_findings?.length || 0;
+  const guardTooltip = `Verdict: ${guardVerdict.status}\nReason: ${firstReason}\nSecrets found: ${secretsCount}`;
+  const verifyTooltip = verifyVerdict 
+    ? `Verdict: ${verifyVerdict.status}\nReasons:\n${verifyVerdict.reasons?.join("\n") || "None"}`
+    : "";
+
+  return (
+    <div className="flex items-center gap-1.5 ml-2">
+      <span
+        className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-widest border select-none ${getGuardClass(guardVerdict.status)}`}
+        title={guardTooltip}
+      >
+        Guard: {guardVerdict.status}
+      </span>
+      {verifyVerdict && (
+        <span
+          className={`inline-flex items-center px-1.5 py-0.5 rounded-sm text-[9px] font-bold uppercase tracking-widest border select-none ${getVerifyClass(verifyVerdict.status)}`}
+          title={verifyTooltip}
+        >
+          Verify: {verifyVerdict.status}
+        </span>
+      )}
+    </div>
+  );
+}
+
 interface TemporalScrubberProps {
   onNewFrame?: () => void;
   onFramesUpdated?: (frames: any[]) => void;
@@ -260,6 +460,7 @@ export default function TemporalScrubber({ onNewFrame, onFramesUpdated }: Tempor
                               {frame.level || 'INFO'}
                             </span>
                             <span className="text-[10px] text-[var(--deploymantis-text-muted)]">{formatTimestamp(frame.timestamp)}</span>
+                            <GuardrailBadges frame={frame} />
                           </div>
                           {frame.latencyMs && (
                             <span className="text-[10px] text-[var(--deploymantis-text-muted)] bg-black/10 border border-[var(--deploymantis-glass-border)] px-1.5 py-0.5 rounded shadow-sm">{frame.latencyMs}ms</span>

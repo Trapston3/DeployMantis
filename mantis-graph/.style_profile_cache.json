@@ -1,0 +1,14 @@
+{
+  "naming": {
+    "functions": "snake_case",
+    "classes": "PascalCase",
+    "constants": "UPPER_SNAKE"
+  },
+  "error_handling": {
+    "prefer_explicit": true
+  },
+  "docstrings": {
+    "style": "google",
+    "coverage": 0.2
+  }
+}

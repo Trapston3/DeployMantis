@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 
 type DataVerbosity = "Compact" | "Developer Mode";
 type TimestampFormat = "relative" | "absolute";
-export type AppId = "strata" | "swarm-chaos" | "vault-guard" | "token-breaker" | "mantis-env" | "mantis-dash" | "core-api";
+export type AppId = "strata" | "swarm-chaos" | "vault-guard" | "token-breaker" | "mantis-env" | "mantis-dash" | "core-api" | "mantis-snap";
 
 interface SettingsContextType {
   activeApp: AppId;
