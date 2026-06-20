@@ -42,6 +42,9 @@ test.describe('DeployMantis Landing Page Smoke Tests', () => {
     await expect(mobileDrawer).toBeVisible();
     await expect(mobileDrawer).toHaveAttribute('aria-hidden', 'false');
 
+    // Wait for drawer open transition to complete
+    await page.waitForTimeout(2000);
+
     // Take mobile menu open screenshot
     const screenshotsDir = process.env.SCREENSHOTS_DIR || '.';
     await page.screenshot({ path: path.join(screenshotsDir, 'mobile nav open.png') });
@@ -143,7 +146,8 @@ test.describe('DeployMantis Landing Page Smoke Tests', () => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await page.goto(targetUrl);
       
-      // Check for horizontal overflow
+      // Wait for entrance animations to settle
+      await page.waitForTimeout(2000);
       const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
       const innerWidth = await page.evaluate(() => window.innerWidth);
       if (scrollWidth > innerWidth) {
@@ -174,6 +178,8 @@ test.describe('DeployMantis Landing Page Smoke Tests', () => {
         // Scroll to pricing section and take screenshot
         const pricingSection = page.locator('#pricing');
         await pricingSection.scrollIntoViewIfNeeded();
+        // Wait for scroll transition to settle
+        await page.waitForTimeout(2000);
         await page.screenshot({ path: path.join(screenshotsDir, 'pricing section.png') });
       } else if (vp.name === 'mobile') {
         await page.screenshot({ path: path.join(screenshotsDir, 'homepage mobile.png') });
