@@ -11,6 +11,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="theme-color" content="#080a0b" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#fbf9f1" media="(prefers-color-scheme: light)">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' fill='none'><rect width='32' height='32' rx='4' fill='%233b82f6'/><path d='M10 22 L16 8 L22 22' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/><path d='M12.5 17 h7' stroke='white' stroke-width='2' stroke-linecap='round'/><circle cx='16' cy='8' r='2' fill='white'/></svg>">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -63,28 +64,28 @@
       --color-surface: #0e1114;
       --color-surface-2: #141820;
       --color-border: #1e2530;
-      --color-border-glow: rgba(167, 139, 250, 0.18);
+      --color-border-glow: rgba(59, 130, 246, 0.18);
       --color-text: #c9d1d9;
       --color-text-muted: #6e7680;
       --color-text-faint: #4a5058; /* Dimmer than muted — tertiary hierarchy level */
       --color-text-inverse: #080a0b;
-      --color-primary: #a78bfa;       /* Soft lavender violet */
-      --color-primary-dim: #7c5fdb;
+      --color-primary: #3b82f6;       /* Trust blue */
+      --color-primary-dim: #2563eb;
       --color-accent-red: #ff4d4d;
       --color-accent-amber: #ffaa00;
-      --color-mono: #c4b5fd;
+      --color-mono: #93c5fd;
       --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
       --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
       --shadow-lg: 0 12px 36px rgba(0,0,0,0.7);
 
-      --color-primary-highlight: rgba(167, 139, 250, 0.15);
+      --color-primary-highlight: rgba(59, 130, 246, 0.15);
 
       /* Terminal adaptive theme variables */
       --color-terminal-bg: #0a0c0e;
       --color-terminal-text: #a9b1d6;
-      --color-terminal-ok: #c4b5fd;
+      --color-terminal-ok: #93c5fd;
       --color-terminal-json: #9ece6a;
-      --color-terminal-green: #a78bfa;
+      --color-terminal-green: #3b82f6;
     }
 
     /* LIGHT THEME (Warm Editorial Cream/Paper) */
@@ -139,7 +140,7 @@
 
     /* ── BASE STYLES ────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; scroll-padding-top: 4.5rem; }
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; scroll-padding-top: 4.5rem; overflow-x: hidden; }
     body {
       min-height: 100dvh;
       font-family: var(--font-body);
@@ -696,6 +697,7 @@
       padding: 100px var(--space-6);
       max-width: var(--content-wide);
       margin-inline: auto;
+      overflow: hidden;
     }
     .features-intro {
       margin-bottom: var(--space-16);
@@ -752,12 +754,13 @@
       flex-direction: column;
       gap: var(--space-3);
       text-align: left;
-      transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
     }
     .infra-card:hover {
       border-color: var(--color-primary-dim);
       transform: translateY(-2px);
       box-shadow: 0 0 20px var(--color-border-glow);
+      transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
     }
     .infra-tag {
       font-family: var(--font-mono);
@@ -1169,12 +1172,13 @@
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
-      transition: border-color var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
     }
     .step:hover {
       border-color: var(--color-primary-dim);
       box-shadow: 0 0 16px var(--color-border-glow);
       transform: translateY(-2px);
+      transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
     }
     .step-num {
       font-family: var(--font-mono);
@@ -1274,7 +1278,7 @@
       display: flex;
       flex-direction: column;
       gap: var(--space-6);
-      transition: transform var(--transition-slow), box-shadow var(--transition-slow), border-color var(--transition-fast);
+      transition: box-shadow var(--transition-slow), border-color var(--transition-fast);
       text-align: left;
       position: relative; /* needed for .pricing-badge absolute positioning */
     }
@@ -1288,6 +1292,7 @@
     .pricing-card.highlight:hover {
       transform: scale(1.02);
       box-shadow: var(--shadow-lg), 0 0 40px var(--color-border-glow);
+      transition: transform var(--transition-slow), box-shadow var(--transition-slow), border-color var(--transition-fast);
     }
     .pricing-badge {
       position: absolute;
@@ -1677,7 +1682,7 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
       </button>
       <a href="#cta" class="btn btn-ghost">Join waitlist</a>
-      <a href="#cta" class="btn btn-primary">Self-host now</a>
+      <a href="#how" class="btn btn-primary">Self-host now</a>
       <button class="mobile-nav-toggle" id="mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
         <span class="line"></span>
         <span class="line"></span>
@@ -1698,7 +1703,7 @@
   </ul>
   <div class="mobile-drawer-actions">
     <a href="#cta" class="btn btn-ghost btn-full" style="justify-content:center;">Join waitlist</a>
-    <a href="#cta" class="btn btn-primary btn-full" style="justify-content:center;">Self-host now</a>
+    <a href="#how" class="btn btn-primary btn-full" style="justify-content:center;">Self-host now</a>
   </div>
 </div>
 <div class="mobile-overlay" id="mobile-overlay"></div>
@@ -2273,7 +2278,7 @@
   
   <div class="cta-form-container">
     <form class="cta-form" id="signup-form" novalidate>
-      <input type="email" name="email" placeholder="you@yourcompany.com" required aria-label="Work email address" id="signup-email">
+      <input type="email" name="email" placeholder="you@yourcompany.com" required aria-label="Work email address" id="signup-email" autocomplete="email">
       <button type="submit" class="btn btn-primary" id="signup-btn">
         <span class="btn-text">Run it locally →</span>
         <span class="loading-spinner" id="signup-spinner"></span>
@@ -2846,7 +2851,8 @@ document.addEventListener('DOMContentLoaded', () => {
         opacity: 0,
         duration: 0.8,
         stagger: 0.15,
-        ease: "power3.out"
+        ease: "power3.out",
+        clearProps: "transform,opacity"
       });
 
       // 5. Steps Scroll Animation
@@ -2859,7 +2865,8 @@ document.addEventListener('DOMContentLoaded', () => {
         opacity: 0,
         duration: 0.8,
         stagger: 0.12,
-        ease: "power2.out"
+        ease: "power2.out",
+        clearProps: "transform,opacity"
       });
 
       // 6. Pricing Cards Scroll Animation
@@ -2872,7 +2879,8 @@ document.addEventListener('DOMContentLoaded', () => {
         opacity: 0,
         duration: 1,
         stagger: 0.15,
-        ease: "back.out(1.2)" // Framer Motion spring physics simulation
+        ease: "back.out(1.2)", // Framer Motion spring physics simulation
+        clearProps: "transform,opacity"
       });
 
       // 7. Testimonials Scroll Animation

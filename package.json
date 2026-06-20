@@ -1,0 +1,27 @@
+{
+  "name": "ai-suite",
+  "version": "1.0.0",
+  "description": "DeployMantis is a self-hosted AI gateway for engineering teams that intercepts, scans, and quality-gates every AI-generated output before it reaches your codebase.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Trapston3/DeployMantis.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Trapston3/DeployMantis/issues"
+  },
+  "homepage": "https://github.com/Trapston3/DeployMantis#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.61.0"
+  }
+}
