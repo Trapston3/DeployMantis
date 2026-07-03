@@ -294,6 +294,9 @@
       align-items: center;
       gap: var(--space-4);
     }
+    nav.nav-scrolled .nav-actions .btn {
+      display: none;
+    }
     
     /* BUTTONS & INTERACTIONS */
     .btn {
@@ -1771,10 +1774,11 @@
       position: relative;
       width: 100%;
       margin-inline: auto;
+      padding-left: var(--space-8);
     }
     .tracing-beam-bar {
       position: absolute;
-      left: -40px;
+      left: 0;
       top: 0;
       bottom: 0;
       width: 20px;
@@ -1784,11 +1788,11 @@
       pointer-events: none;
     }
     .tracing-beam-dot {
-      width: 8px;
-      height: 8px;
+      width: 12px;
+      height: 12px;
       border-radius: 50%;
       background: var(--color-primary);
-      box-shadow: 0 0 10px var(--color-primary);
+      box-shadow: 0 0 12px var(--color-primary);
       position: absolute;
       top: var(--dot-y, 0px);
       left: 50%;
@@ -1808,6 +1812,9 @@
     }
     
     @media (max-width: 1024px) {
+      .tracing-beam-wrapper {
+        padding-left: 0;
+      }
       .tracing-beam-bar {
         display: none;
       }
@@ -2228,8 +2235,8 @@
       <div class="tracing-beam-bar">
         <div class="tracing-beam-dot"></div>
         <svg class="tracing-beam-svg" viewBox="0 0 20 1000" preserveAspectRatio="none">
-          <path class="tracing-beam-path-bg" d="M 10 0 L 10 1000" fill="none" stroke="var(--color-border)" stroke-width="2"></path>
-          <path class="tracing-beam-path-glow" d="M 10 0 L 10 1000" fill="none" stroke="url(#tracing-beam-gradient)" stroke-width="2"></path>
+          <path class="tracing-beam-path-bg" d="M 10 0 L 10 1000" fill="none" stroke="var(--color-border)" stroke-width="2.5"></path>
+          <path class="tracing-beam-path-glow" d="M 10 0 L 10 1000" fill="none" stroke="url(#tracing-beam-gradient)" stroke-width="3.5"></path>
           <defs>
             <linearGradient id="tracing-beam-gradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stop-color="#ff6496" stop-opacity="0"></stop>
@@ -3855,8 +3862,22 @@ document.addEventListener('DOMContentLoaded', () => {
         constructor(element, text) {
           this.element = element;
           this.text = text;
+          
+          // Clear current content, and create a hidden text-span + absolute canvas
+          this.element.innerHTML = '';
+          
+          this.textSpan = document.createElement('span');
+          this.textSpan.textContent = this.text;
+          this.textSpan.style.visibility = 'hidden';
+          this.textSpan.style.display = 'inline-block';
+          this.element.appendChild(this.textSpan);
+          
           this.canvas = document.createElement('canvas');
+          this.canvas.style.position = 'absolute';
+          this.canvas.style.top = '0';
+          this.canvas.style.left = '0';
           this.element.appendChild(this.canvas);
+          
           this.ctx = this.canvas.getContext('2d');
           this.active = false;
           this.animationRef = null;
@@ -3875,26 +3896,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         updateDimensions() {
-          // Temporarily make element visible to measure size
-          const originalOpacity = this.element.style.opacity;
-          const originalDisplay = this.element.style.display;
-          
-          this.element.style.opacity = '0';
-          this.element.style.display = 'inline-block';
-          
-          const span = document.createElement('span');
-          span.style.font = window.getComputedStyle(this.element).font;
-          span.style.fontFamily = 'monospace';
-          span.style.fontWeight = '700';
-          span.textContent = this.text;
-          document.body.appendChild(span);
-          
-          const rect = span.getBoundingClientRect();
-          document.body.removeChild(span);
-          
-          this.element.style.opacity = originalOpacity;
-          this.element.style.display = originalDisplay;
-          
+          const rect = this.textSpan.getBoundingClientRect();
           this.width = Math.ceil(rect.width) || 120;
           this.height = Math.ceil(rect.height) || 40;
           
@@ -3904,8 +3906,8 @@ document.addEventListener('DOMContentLoaded', () => {
           this.canvas.style.width = `${this.width}px`;
           this.canvas.style.height = `${this.height}px`;
           
-          const fontSize = window.getComputedStyle(this.element).fontSize;
-          this.font = `bold ${fontSize} monospace`;
+          const computed = window.getComputedStyle(this.element);
+          this.font = `${computed.fontWeight} ${computed.fontSize} monospace`;
         }
         
         start() {
