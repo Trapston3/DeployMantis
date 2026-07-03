@@ -64,28 +64,30 @@
       --color-surface: #0e1114;
       --color-surface-2: #141820;
       --color-border: #1e2530;
-      --color-border-glow: rgba(59, 130, 246, 0.18);
+      --color-border-glow: rgba(167, 139, 250, 0.18);
       --color-text: #c9d1d9;
       --color-text-muted: #6e7680;
       --color-text-faint: #4a5058; /* Dimmer than muted — tertiary hierarchy level */
       --color-text-inverse: #080a0b;
-      --color-primary: #3b82f6;       /* Trust blue */
-      --color-primary-dim: #2563eb;
+      --color-primary: #a78bfa;       /* Premium lavender instead of blue */
+      --color-primary-dim: #8b5cf6;    /* Violet */
       --color-accent-red: #ff4d4d;
       --color-accent-amber: #ffaa00;
-      --color-mono: #93c5fd;
+      --color-mono: #c084fc;
       --shadow-sm: 0 1px 2px rgba(0,0,0,0.4);
       --shadow-md: 0 4px 12px rgba(0,0,0,0.5);
       --shadow-lg: 0 12px 36px rgba(0,0,0,0.7);
 
-      --color-primary-highlight: rgba(59, 130, 246, 0.15);
+      --color-primary-highlight: rgba(167, 139, 250, 0.15);
 
       /* Terminal adaptive theme variables */
       --color-terminal-bg: #0a0c0e;
       --color-terminal-text: #a9b1d6;
-      --color-terminal-ok: #93c5fd;
+      --color-terminal-ok: #a78bfa;
       --color-terminal-json: #9ece6a;
-      --color-terminal-green: #3b82f6;
+      --color-terminal-green: #8b5cf6;
+      
+      --noise-gradient: linear-gradient(135deg, rgb(255, 100, 150) 0%, rgb(100, 150, 255) 50%, rgb(255, 200, 100) 100%);
     }
 
     /* LIGHT THEME (Warm Editorial Cream/Paper) */
@@ -94,28 +96,30 @@
       --color-surface: #f7f4ea;        /* Slightly darker cream for cards */
       --color-surface-2: #efe9d9;      /* Elevated surface / inputs */
       --color-border: #e2dbca;         /* Warm border grey */
-      --color-border-glow: rgba(194, 65, 12, 0.10);
+      --color-border-glow: rgba(244, 63, 94, 0.12);
       --color-text: #1d1c1a;           /* Soft warm charcoal */
       --color-text-muted: #6c695e;     /* Muted body text */
       --color-text-faint: #9d998b;     /* Faint text */
       --color-text-inverse: #ffffff;
-      --color-primary: #c2410c;        /* Deep burnt orange */
-      --color-primary-dim: #9a3412;
+      --color-primary: #f43f5e;        /* Rose/warm pink instead of deep orange */
+      --color-primary-dim: #e11d48;
       --color-accent-red: #c0392b;     /* Warm crimson red */
       --color-accent-amber: #b87b00;   /* Warm amber */
-      --color-mono: #c2410c;
+      --color-mono: #f43f5e;
       --shadow-sm: 0 1px 2px rgba(29, 28, 26, 0.04);
       --shadow-md: 0 4px 12px rgba(29, 28, 26, 0.05);
       --shadow-lg: 0 12px 30px rgba(29, 28, 26, 0.06);
 
-      --color-primary-highlight: rgba(194, 65, 12, 0.09);
+      --color-primary-highlight: rgba(244, 63, 94, 0.10);
 
       /* Warm light terminals (No harsh black backgrounds) */
       --color-terminal-bg: #efe9d9;
       --color-terminal-text: #1d1c1a;
-      --color-terminal-ok: #c2410c;
+      --color-terminal-ok: #f43f5e;
       --color-terminal-json: #296a12;
-      --color-terminal-green: #9a3412;
+      --color-terminal-green: #e11d48;
+      
+      --noise-gradient: linear-gradient(135deg, rgb(255, 100, 150) 0%, rgb(100, 150, 255) 50%, rgb(255, 200, 100) 100%);
     }
 
     /* Skip to content link */
@@ -185,24 +189,38 @@
 
     /* ── NAVIGATION (STICKY & REDUCING) ─────────────────── */
     nav {
-      position: sticky;
+      position: fixed;
       top: 0;
-      z-index: 201;
+      left: 0;
+      right: 0;
+      z-index: 210;
       background: rgba(8, 10, 11, 0.85);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid transparent;
-      transition: padding var(--transition-slow), background var(--transition-fast), border-color var(--transition-fast);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     [data-theme="light"] nav {
       background: rgba(251, 249, 241, 0.90);
     }
-    nav.scrolled {
-      border-bottom: 1px solid var(--color-border);
-      background: rgba(8, 10, 11, 0.95);
+    
+    /* Dynamic Notch / Resizable floating Dock state */
+    nav.nav-scrolled {
+      top: 16px;
+      left: 50%;
+      right: auto;
+      transform: translateX(-50%);
+      width: calc(100% - 32px);
+      max-width: 490px;
+      height: 48px;
+      border-radius: 9999px;
+      border: 1px solid var(--color-border);
+      background: #080a0b; /* fully opaque notch background */
+      box-shadow: var(--shadow-lg), 0 0 24px var(--color-border-glow);
+      padding-inline: var(--space-4);
     }
-    [data-theme="light"] nav.scrolled {
-      background: rgba(251, 249, 241, 0.98);
+    [data-theme="light"] nav.nav-scrolled {
+      background: #fbf9f1;
     }
     
     .nav-inner {
@@ -212,10 +230,18 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      transition: padding var(--transition-slow);
+      transition: padding 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 100%;
     }
-    nav.scrolled .nav-inner {
-      padding: var(--space-3.5) var(--space-6);
+    nav.nav-scrolled .nav-inner {
+      padding: 0;
+      height: 100%;
+    }
+    
+    /* Hover-expand notch: macOS Dock style resizing */
+    nav.nav-scrolled:hover {
+      max-width: 580px; /* expands to show elements fully */
+      box-shadow: var(--shadow-lg), 0 0 32px var(--color-border-glow);
     }
     
     .nav-logo {
@@ -229,12 +255,19 @@
       height: 24px;
       transition: transform var(--transition-slow);
     }
-    nav.scrolled .nav-logo-mark { transform: scale(0.9); }
+    nav.nav-scrolled .nav-logo-mark { transform: scale(0.9); }
     .nav-wordmark {
       font-family: var(--font-mono);
       font-size: var(--text-sm);
       font-weight: 700;
       letter-spacing: -0.02em;
+      transition: opacity 0.3s ease, width 0.3s ease;
+    }
+    nav.nav-scrolled .nav-wordmark {
+      opacity: 0;
+      width: 0;
+      overflow: hidden;
+      margin: 0;
     }
     
     .nav-links {
@@ -242,6 +275,10 @@
       align-items: center;
       gap: var(--space-6);
       list-style: none;
+      transition: gap 0.3s ease;
+    }
+    nav.nav-scrolled .nav-links {
+      gap: var(--space-2.5);
     }
     .nav-links a {
       font-size: var(--text-sm);
@@ -283,13 +320,13 @@
     .btn-ghost:active { transform: translateY(0.5px); }
     
     .btn-primary {
-      background: var(--color-primary);
-      color: var(--color-bg);
-      border-color: var(--color-primary);
+      background: var(--noise-gradient);
+      color: #080a0b;
+      border: none;
+      font-weight: 600;
     }
     .btn-primary:hover {
-      background: var(--color-primary-dim);
-      border-color: var(--color-primary-dim);
+      opacity: 0.92;
       transform: translateY(-1px);
       box-shadow: 0 4px 20px var(--color-border-glow);
     }
@@ -1689,69 +1726,132 @@
       z-index: 2;
     }
 
-    /* 2. Evervault Card Component */
-    .evervault-container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      min-height: 240px;
-      overflow: hidden;
-      border-radius: var(--radius-lg);
-      background: var(--color-terminal-bg);
-      border: 1px solid var(--color-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-    }
-    .evervault-inner {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .evervault-glow {
+    /* 2. Noise Background Component (Bento Visual Containers) */
+    .noise-bg-container {
       position: absolute;
       inset: 0;
       pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.5s ease;
-      background: radial-gradient(180px at var(--mouse-x, 0px) var(--mouse-y, 0px), var(--color-primary-highlight), transparent);
+      z-index: 1;
+      overflow: hidden;
+      opacity: 0.15; /* subtle at rest */
+      transition: opacity 0.4s ease;
     }
-    .evervault-container:hover .evervault-glow {
-      opacity: 1;
+    .bento-visual:hover .noise-bg-container {
+      opacity: 0.35; /* stronger on hover */
     }
-    .evervault-chars {
+    .noise-bg-gradient {
+      position: absolute;
+      inset: -50%;
+      width: 200%;
+      height: 200%;
+      opacity: 0.4;
+      mix-blend-mode: screen;
+      filter: blur(60px);
+    }
+    .noise-bg-gradient.layer-1 {
+      background: radial-gradient(circle at var(--layer1-x, 30%) var(--layer1-y, 40%), rgb(255, 100, 150) 0%, transparent 60%);
+    }
+    .noise-bg-gradient.layer-2 {
+      background: radial-gradient(circle at var(--layer2-x, 70%) var(--layer2-y, 60%), rgb(100, 150, 255) 0%, transparent 60%);
+    }
+    .noise-bg-gradient.layer-3 {
+      background: radial-gradient(circle at var(--layer3-x, 50%) var(--layer3-y, 80%), rgb(255, 200, 100) 0%, transparent 60%);
+    }
+    .noise-bg-overlay {
       position: absolute;
       inset: 0;
-      word-break: break-all;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      line-height: 1.1;
-      color: var(--color-primary);
-      opacity: 0.15;
-      padding: var(--space-3);
-      pointer-events: none;
-      user-select: none;
-      mask-image: radial-gradient(150px at var(--mouse-x, 0px) var(--mouse-y, 0px), white, transparent);
-      -webkit-mask-image: radial-gradient(150px at var(--mouse-x, 0px) var(--mouse-y, 0px), white, transparent);
-      transition: opacity 0.3s ease;
+      background-image: url('https://assets.aceternity.com/noise.webp');
+      background-size: cover;
+      opacity: 0.25;
+      mix-blend-mode: overlay;
     }
-    .evervault-container:hover .evervault-chars {
-      opacity: 0.35;
-    }
-    .evervault-content {
+
+    /* 3. Tracing Beam Component */
+    .tracing-beam-wrapper {
       position: relative;
+      width: 100%;
+      margin-inline: auto;
+    }
+    .tracing-beam-bar {
+      position: absolute;
+      left: -40px;
+      top: 0;
+      bottom: 0;
+      width: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: none;
+    }
+    .tracing-beam-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      box-shadow: 0 0 10px var(--color-primary);
+      position: absolute;
+      top: var(--dot-y, 0px);
+      left: 50%;
+      transform: translateX(-50%);
       z-index: 10;
-      width: 100%;
+      transition: top 0.05s ease-out;
+    }
+    .tracing-beam-svg {
+      width: 20px;
       height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: var(--space-4);
+      display: block;
+    }
+    .tracing-beam-path-glow {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: var(--dash-offset, 1000);
+      transition: stroke-dashoffset 0.05s ease-out;
+    }
+    
+    @media (max-width: 1024px) {
+      .tracing-beam-bar {
+        display: none;
+      }
+    }
+
+    /* 4. Canvas Text Flip Container */
+    .canvas-text-flip-container {
+      position: relative;
+      display: inline-block;
+      vertical-align: bottom;
+      height: 1.2em;
+      line-height: 1.2;
+      transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      padding-inline: var(--space-4);
+      border-radius: var(--radius-md);
+      background: linear-gradient(to bottom, #1f2937, #111827);
+      border: 1px solid var(--color-border);
+      box-shadow: inset 0 -1px rgba(0, 0, 0, 0.5), 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+    [data-theme="light"] .canvas-text-flip-container {
+      background: linear-gradient(to bottom, #f3f4f6, #e5e7eb);
+      border-color: #d1d5db;
+      box-shadow: inset 0 -1px #d1d5db, 0 4px 8px rgba(0, 0, 0, 0.05);
+    }
+    .flip-word {
+      position: absolute;
+      left: var(--space-4);
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      white-space: nowrap;
+      font-family: var(--font-mono);
+      font-size: var(--text-2xl);
+      font-weight: 700;
+    }
+    @media (min-width: 768px) {
+      .flip-word {
+        font-size: clamp(2rem, 4vw, 4rem);
+      }
+    }
+    .flip-word.active {
+      opacity: 1;
+      z-index: 5;
     }
 
     /* 3. Placeholders & Vanish Input Component */
@@ -2043,9 +2143,15 @@
       DEPLOYMANTIS v0.1 · EARLY ACCESS 
     </div>
     
-    <h1 class="scramble-text">
-      Your AI stack,<br>
-      finally under control.
+    <h1>
+      Your AI Stack,<br>
+      finally <span class="canvas-text-flip-container" id="hero-flip-container">
+        <span class="flip-word active" data-word="under control">under control</span>
+        <span class="flip-word" data-word="secure">secure</span>
+        <span class="flip-word" data-word="compliant">compliant</span>
+        <span class="flip-word" data-word="budget-safe">budget-safe</span>
+        <span class="flip-word" data-word="telemetry-free">telemetry-free</span>
+      </span>
     </h1>
     
     <p class="hero-sub">
@@ -2113,221 +2219,282 @@
   <div class="section-inner">
     <div class="features-intro">
       <p class="section-label">Services</p>
-      <h2 class="section-title scramble-text" id="features-title">Nine services. One pipe. Nothing leaks.</h2>
+      <h2 class="section-title" id="features-title">Nine services. One pipe. Nothing leaks.</h2>
       <p class="section-sub">DeployMantis intercepts, sanitizes, and controls all outbound AI traffic through specialized local nodes.</p>
     </div>
 
-    <div class="bento-container">
-      
-      <!-- Row 1: Vault-Guard -->
-      <div class="bento-row">
-        <div class="bento-info">
-          <span class="bento-tag">Security</span>
-          <h3 class="bento-h">Vault-Guard</h3>
-          <p class="bento-p">
-            Real-time regex scanner that redacts API keys, credentials, and PII before prompts leave your network. Fully customizable via YAML rules.
-          </p>
-          <div class="bento-code-snippet">
-            <span class="masked">sk-••••••••••••••••••••3f4a</span> &rarr; masked by vault-guard
-          </div>
-        </div>
-        
-        <div class="bento-visual">
-          <div class="compare-container" id="vg-compare">
-            <!-- Label indicators -->
-            <span class="compare-label before">Outbound Prompt</span>
-            <span class="compare-label after">Sanitized Payload</span>
-            
-            <!-- Before panel (raw keys) -->
-            <div class="compare-panel before">
-              <div class="vg-box" style="border:none; background:transparent; min-height:auto; padding:0;">
-                Use AWS key <span class="key-raw" style="color:var(--color-accent-red); font-weight:bold;">AKIAIOSFODNN7INVALID</span> to complete this deploy job...
-              </div>
-            </div>
-            
-            <!-- After panel (masked keys) -->
-            <div class="compare-panel after">
-              <div class="vg-box" style="border:none; background:transparent; min-height:auto; padding:0;">
-                Use AWS key <span class="key-masked">████████████████████</span> to complete this deploy job...
-              </div>
-            </div>
-            
-            <!-- Slider handle -->
-            <div class="compare-handle">
-              <div class="compare-handle-button">
-                &larr;&rarr;
-              </div>
-            </div>
-          </div>
-        </div>
+    <div class="tracing-beam-wrapper" id="features-tracing-beam">
+      <!-- Tracing Beam SVG elements -->
+      <div class="tracing-beam-bar">
+        <div class="tracing-beam-dot"></div>
+        <svg class="tracing-beam-svg" viewBox="0 0 20 1000" preserveAspectRatio="none">
+          <path class="tracing-beam-path-bg" d="M 10 0 L 10 1000" fill="none" stroke="var(--color-border)" stroke-width="2"></path>
+          <path class="tracing-beam-path-glow" d="M 10 0 L 10 1000" fill="none" stroke="url(#tracing-beam-gradient)" stroke-width="2"></path>
+          <defs>
+            <linearGradient id="tracing-beam-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ff6496" stop-opacity="0"></stop>
+              <stop offset="30%" stop-color="#6496ff" stop-opacity="1"></stop>
+              <stop offset="70%" stop-color="#ffc864" stop-opacity="1"></stop>
+              <stop offset="100%" stop-color="#ff6496" stop-opacity="0"></stop>
+            </linearGradient>
+          </defs>
+        </svg>
       </div>
 
-      <!-- Row 2: MantisVerify -->
-      <div class="bento-row reverse full-width">
-        <div class="bento-info">
-          <span class="bento-tag">Quality</span>
-          <h3 class="bento-h">MantisVerify</h3>
-          <p class="bento-p">
-            Gating service that scores every AI-generated code change before humans review it. Analyzes AST, checks structure, and marks PRs as PASS or FAIL.
-          </p>
-        </div>
+      <div class="bento-container" style="flex-grow: 1;">
         
-        <div class="bento-visual" style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-4); align-items:center;">
-          <div class="mv-code-panel">
-            <span>// main.py</span><br>
-            <span class="mv-code-del">- eval(user_input) # risky</span><br>
-            <span class="mv-code-add">+ safe_execute(user_input)</span><br>
-            <span>def safe_execute(code):</span><br>
-            <span>  # AST validation added</span>
-          </div>
-          <div class="mv-verdict-card">
-            <div class="mv-header">
-              <span style="font-family:var(--font-mono); font-size:10px; font-weight:bold;">VERDICT</span>
-              <span class="mv-badge pass">PASS</span>
+        <!-- Row 1: Vault-Guard -->
+        <div class="bento-row">
+          <div class="bento-info">
+            <span class="bento-tag">Security</span>
+            <h3 class="bento-h">Vault-Guard</h3>
+            <p class="bento-p">
+              Real-time regex scanner that redacts API keys, credentials, and PII before prompts leave your network. Fully customizable via YAML rules.
+            </p>
+            <div class="bento-code-snippet">
+              <span class="masked">sk-••••••••••••••••••••3f4a</span> &rarr; masked by vault-guard
             </div>
-            <div>
+          </div>
+          
+          <div class="bento-visual">
+            <!-- Noise Background Component -->
+            <div class="noise-bg-container">
+              <div class="noise-bg-gradient layer-1"></div>
+              <div class="noise-bg-gradient layer-2"></div>
+              <div class="noise-bg-gradient layer-3"></div>
+              <div class="noise-bg-overlay"></div>
+            </div>
+            
+            <div class="compare-container" id="vg-compare" style="position:relative; z-index:10;">
+              <!-- Label indicators -->
+              <span class="compare-label before">Outbound Prompt</span>
+              <span class="compare-label after">Sanitized Payload</span>
+              
+              <!-- Before panel (raw keys) -->
+              <div class="compare-panel before">
+                <div class="vg-box" style="border:none; background:transparent; min-height:auto; padding:0;">
+                  Use AWS key <span class="key-raw" style="color:var(--color-accent-red); font-weight:bold;">AKIAIOSFODNN7INVALID</span> to complete this deploy job...
+                </div>
+              </div>
+              
+              <!-- After panel (masked keys) -->
+              <div class="compare-panel after">
+                <div class="vg-box" style="border:none; background:transparent; min-height:auto; padding:0;">
+                  Use AWS key <span class="key-masked">████████████████████</span> to complete this deploy job...
+                </div>
+              </div>
+              
+              <!-- Slider handle -->
+              <div class="compare-handle">
+                <div class="compare-handle-button">
+                  &larr;&rarr;
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: MantisVerify -->
+        <div class="bento-row reverse full-width">
+          <div class="bento-info">
+            <span class="bento-tag">Quality</span>
+            <h3 class="bento-h">MantisVerify</h3>
+            <p class="bento-p">
+              Gating service that scores every AI-generated code change before humans review it. Analyzes AST, checks structure, and marks PRs as PASS or FAIL.
+            </p>
+          </div>
+          
+          <div class="bento-visual" style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-4); align-items:center;">
+            <!-- Noise Background Component -->
+            <div class="noise-bg-container">
+              <div class="noise-bg-gradient layer-1"></div>
+              <div class="noise-bg-gradient layer-2"></div>
+              <div class="noise-bg-gradient layer-3"></div>
+              <div class="noise-bg-overlay"></div>
+            </div>
+            
+            <div class="mv-code-panel" style="position:relative; z-index:10;">
+              <span>// main.py</span><br>
+              <span class="mv-code-del">- eval(user_input) # risky</span><br>
+              <span class="mv-code-add">+ safe_execute(user_input)</span><br>
+              <span>def safe_execute(code):</span><br>
+              <span>  # AST validation added</span>
+            </div>
+            <div class="mv-verdict-card" style="position:relative; z-index:10;">
               <div class="mv-header">
-                <span class="mv-score-label">AST Trust Score</span>
-                <span class="mv-score-value">0.94</span>
+                <span style="font-family:var(--font-mono); font-size:10px; font-weight:bold;">VERDICT</span>
+                <span class="mv-badge pass">PASS</span>
               </div>
-              <div class="mv-score-bar">
-                <div class="mv-score-bar-fill"></div>
+              <div>
+                <div class="mv-header">
+                  <span class="mv-score-label">AST Trust Score</span>
+                  <span class="mv-score-value">0.94</span>
+                </div>
+                <div class="mv-score-bar">
+                  <div class="mv-score-bar-fill"></div>
+                </div>
               </div>
-            </div>
-            <ul class="mv-findings">
-              <li>No dynamic evals found</li>
-              <li>AST safety nodes verified</li>
-              <li>Execution boundaries matching</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 3: Token-Breaker -->
-      <div class="bento-row">
-        <div class="bento-info">
-          <span class="bento-tag">Budget</span>
-          <h3 class="bento-h">Token-Breaker</h3>
-          <p class="bento-p">
-            Financial circuit breaker that enforces strict budget caps per developer and team. Runaway loops are terminated instantly.
-          </p>
-        </div>
-        
-        <div class="bento-visual">
-          <div class="tb-budget-container">
-            <div class="tb-meter-wrapper">
-              <div class="tb-meter-header">
-                <span>Agent #108 Spend Limit</span>
-                <span class="tb-limit-flag" id="tb-limit-flag">LIMIT REACHED</span>
-              </div>
-              <div class="tb-progress-bar">
-                <div class="tb-progress-fill" id="tb-progress-fill"></div>
-              </div>
-            </div>
-            <div class="tb-agents-rows">
-              <div class="tb-agent-row">
-                <span>dev-agent-frontend</span>
-                <span>$14.20 / $50</span>
-                <span>28%</span>
-              </div>
-              <div class="tb-agent-row exceeded" id="tb-agent-row-exceeded">
-                <span>auto-refactor-agent</span>
-                <span>$200.04 / $200</span>
-                <span>100%</span>
-              </div>
+              <ul class="mv-findings">
+                <li>No dynamic evals found</li>
+                <li>AST safety nodes verified</li>
+                <li>Execution boundaries matching</li>
+              </ul>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- Row 4: Fallback-Mesh -->
-      <div class="bento-row reverse">
-        <div class="bento-info">
-          <span class="bento-tag">Resilience</span>
-          <h3 class="bento-h">Fallback-Mesh</h3>
-          <p class="bento-p">
-            Ensures service availability. If primary cloud models (e.g. OpenAI) fail or rate-limit, Fallback-Mesh automatically routes payloads to pre-configured local Ollama models.
-          </p>
-        </div>
-        
-        <div class="bento-visual">
-          <div class="fm-visual-route">
-            <div class="fm-node failed" id="fm-node-primary">OpenAI API (gpt-4o) [503 Service Unavailable]</div>
-            <div class="fm-arrow-connector">
-              <span>routing failover...</span>
-              <div class="fm-arrow-path active"></div>
-            </div>
-            <div class="fm-node active" id="fm-node-fallback">Ollama Local (llama3:8b) [ONLINE]</div>
+        <!-- Row 3: Token-Breaker -->
+        <div class="bento-row">
+          <div class="bento-info">
+            <span class="bento-tag">Budget</span>
+            <h3 class="bento-h">Token-Breaker</h3>
+            <p class="bento-p">
+              Financial circuit breaker that enforces strict budget caps per developer and team. Runaway loops are terminated instantly.
+            </p>
           </div>
-        </div>
-      </div>
-
-      <!-- Row 5: Strata Observability -->
-      <div class="bento-row">
-        <div class="bento-info">
-          <span class="bento-tag">Observability</span>
-          <h3 class="bento-h">Strata Tracing</h3>
-          <p class="bento-p">
-            Every token, latency metric, and request audit trail is logged and exported locally. Odysseus dashboard visualizes service logs and team usage statistics.
-          </p>
-        </div>
-        
-        <div class="bento-visual">
-          <div class="st-visual">
-            <div class="st-trace-header">
-              <span>SERVICE</span>
-              <span>REQUEST ID</span>
-              <span>LATENCY</span>
-              <span>STATUS</span>
+          
+          <div class="bento-visual">
+            <!-- Noise Background Component -->
+            <div class="noise-bg-container">
+              <div class="noise-bg-gradient layer-1"></div>
+              <div class="noise-bg-gradient layer-2"></div>
+              <div class="noise-bg-gradient layer-3"></div>
+              <div class="noise-bg-overlay"></div>
             </div>
-            <div class="st-trace-row">
-              <span>core-api</span>
-              <span>req_01j0x1</span>
-              <span>124ms</span>
-              <span class="st-badge">OK</span>
-            </div>
-            <div class="st-trace-row">
-              <span>vault-guard</span>
-              <span>req_01j0x1</span>
-              <span>18ms</span>
-              <span class="st-badge">PASSED</span>
-            </div>
-            <div class="st-trace-row">
-              <span>token-breaker</span>
-              <span>req_01j0x1</span>
-              <span>2ms</span>
-              <span class="st-badge">ALLOWED</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Row 6: MantisSnap -->
-      <div class="bento-row reverse">
-        <div class="bento-info">
-          <span class="bento-tag">Context</span>
-          <h3 class="bento-h">MantisSnap</h3>
-          <p class="bento-p">
-            Branch-aware context restoration. Save your working memory state to local SQLite cache when switching branches. Instantly reload TODO logs.
-          </p>
-        </div>
-        
-        <div class="bento-visual evervault-container" id="snap-evervault">
-          <div class="evervault-inner">
-            <div class="evervault-glow"></div>
-            <div class="evervault-chars"></div>
-            <div class="evervault-content">
-              <div class="ms-visual-terminal" style="position:relative; z-index:2; background:rgba(10, 12, 14, 0.85); backdrop-filter:blur(4px); padding:var(--space-4); border:1px solid var(--color-border); border-radius:var(--radius-md); width:100%;">
-                <span>$ git checkout feat/scanner</span><br>
-                <span>Switched to branch 'feat/scanner'</span><br>
-                <span>$ curl http://localhost:5004/context</span><br>
-                <span class="ms-json">{ "last_active_file": "vault-guard/main.py", "todos_pending": 3 }</span>
+            
+            <div class="tb-budget-container" style="position:relative; z-index:10;">
+              <div class="tb-meter-wrapper">
+                <div class="tb-meter-header">
+                  <span>Agent #108 Spend Limit</span>
+                  <span class="tb-limit-flag" id="tb-limit-flag">LIMIT REACHED</span>
+                </div>
+                <div class="tb-progress-bar">
+                  <div class="tb-progress-fill" id="tb-progress-fill"></div>
+                </div>
+              </div>
+              <div class="tb-agents-rows">
+                <div class="tb-agent-row">
+                  <span>dev-agent-frontend</span>
+                  <span>$14.20 / $50</span>
+                  <span>28%</span>
+                </div>
+                <div class="tb-agent-row exceeded" id="tb-agent-row-exceeded">
+                  <span>auto-refactor-agent</span>
+                  <span>$200.04 / $200</span>
+                  <span>100%</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
+        <!-- Row 4: Fallback-Mesh -->
+        <div class="bento-row reverse">
+          <div class="bento-info">
+            <span class="bento-tag">Resilience</span>
+            <h3 class="bento-h">Fallback-Mesh</h3>
+            <p class="bento-p">
+              Ensures service availability. If primary cloud models (e.g. OpenAI) fail or rate-limit, Fallback-Mesh automatically routes payloads to pre-configured local Ollama models.
+            </p>
+          </div>
+          
+          <div class="bento-visual">
+            <!-- Noise Background Component -->
+            <div class="noise-bg-container">
+              <div class="noise-bg-gradient layer-1"></div>
+              <div class="noise-bg-gradient layer-2"></div>
+              <div class="noise-bg-gradient layer-3"></div>
+              <div class="noise-bg-overlay"></div>
+            </div>
+            
+            <div class="fm-visual-route" style="position:relative; z-index:10;">
+              <div class="fm-node failed" id="fm-node-primary">OpenAI API (gpt-4o) [503 Service Unavailable]</div>
+              <div class="fm-arrow-connector">
+                <span>routing failover...</span>
+                <div class="fm-arrow-path active"></div>
+              </div>
+              <div class="fm-node active" id="fm-node-fallback">Ollama Local (llama3:8b) [ONLINE]</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 5: Strata Observability -->
+        <div class="bento-row">
+          <div class="bento-info">
+            <span class="bento-tag">Observability</span>
+            <h3 class="bento-h">Strata Tracing</h3>
+            <p class="bento-p">
+              Every token, latency metric, and request audit trail is logged and exported locally. Odysseus dashboard visualizes service logs and team usage statistics.
+            </p>
+          </div>
+          
+          <div class="bento-visual">
+            <!-- Noise Background Component -->
+            <div class="noise-bg-container">
+              <div class="noise-bg-gradient layer-1"></div>
+              <div class="noise-bg-gradient layer-2"></div>
+              <div class="noise-bg-gradient layer-3"></div>
+              <div class="noise-bg-overlay"></div>
+            </div>
+            
+            <div class="st-visual" style="position:relative; z-index:10;">
+              <div class="st-trace-header">
+                <span>SERVICE</span>
+                <span>REQUEST ID</span>
+                <span>LATENCY</span>
+                <span>STATUS</span>
+              </div>
+              <div class="st-trace-row">
+                <span>core-api</span>
+                <span>req_01j0x1</span>
+                <span>124ms</span>
+                <span class="st-badge">OK</span>
+              </div>
+              <div class="st-trace-row">
+                <span>vault-guard</span>
+                <span>req_01j0x1</span>
+                <span>18ms</span>
+                <span class="st-badge">PASSED</span>
+              </div>
+              <div class="st-trace-row">
+                <span>token-breaker</span>
+                <span>req_01j0x1</span>
+                <span>2ms</span>
+                <span class="st-badge">ALLOWED</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 6: MantisSnap -->
+        <div class="bento-row reverse">
+          <div class="bento-info">
+            <span class="bento-tag">Context</span>
+            <h3 class="bento-h">MantisSnap</h3>
+            <p class="bento-p">
+              Branch-aware context restoration. Save your working memory state to local SQLite cache when switching branches. Instantly reload TODO logs.
+            </p>
+          </div>
+          
+          <div class="bento-visual" id="snap-terminal-wrapper">
+            <!-- Noise Background Component -->
+            <div class="noise-bg-container">
+              <div class="noise-bg-gradient layer-1"></div>
+              <div class="noise-bg-gradient layer-2"></div>
+              <div class="noise-bg-gradient layer-3"></div>
+              <div class="noise-bg-overlay"></div>
+            </div>
+            
+            <div class="ms-visual-terminal" style="position:relative; z-index:10;">
+              <span>$ git checkout feat/scanner</span><br>
+              <span>Switched to branch 'feat/scanner'</span><br>
+              <span>$ curl http://localhost:5004/context</span><br>
+              <span class="ms-json">{ "last_active_file": "vault-guard/main.py", "todos_pending": 3 }</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
 
     <!-- Core Infrastructure Services Grid -->
@@ -2717,9 +2884,9 @@
   const navbar = document.querySelector('nav');
   window.addEventListener('scroll', () => {
     if (window.scrollY > 80) {
-      navbar.classList.add('scrolled');
+      navbar.classList.add('nav-scrolled');
     } else {
-      navbar.classList.remove('scrolled');
+      navbar.classList.remove('nav-scrolled');
     }
   });
 
@@ -3126,20 +3293,10 @@
   }
 
   if (scrambleElements.length > 0) {
-    const scrambleObserver = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          triggerScramble(entry.target);
-          scrambleObserver.unobserve(entry.target);
-        }
+    window.addEventListener('load', () => {
+      scrambleElements.forEach(el => {
+        triggerScramble(el, 1500);
       });
-    }, { threshold: 0.15 });
-
-    scrambleElements.forEach(el => {
-      el.addEventListener('mouseenter', () => {
-        triggerScramble(el, 800);
-      });
-      scrambleObserver.observe(el);
     });
   }
 
@@ -3631,6 +3788,227 @@ document.addEventListener('DOMContentLoaded', () => {
         stagger: 0.12,
         ease: "power3.out"
       });
+      // ── BENTO NOISE BACKGROUND ANIMATION ────────────────────
+      function animateBentoNoise(time) {
+        const containers = document.querySelectorAll('.noise-bg-container');
+        containers.forEach((container, index) => {
+          const t = time * 0.00025 + index * 50;
+          
+          // Smooth sine/cosine variations for organic float
+          const l1x = 30 + Math.sin(t) * 18;
+          const l1y = 40 + Math.cos(t * 0.8) * 18;
+          
+          const l2x = 70 + Math.cos(t * 1.15) * 18;
+          const l2y = 60 + Math.sin(t * 0.95) * 18;
+          
+          const l3x = 50 + Math.sin(t * 0.75) * 20;
+          const l3y = 80 + Math.cos(t * 1.35) * 18;
+          
+          container.style.setProperty('--layer1-x', `${l1x}%`);
+          container.style.setProperty('--layer1-y', `${l1y}%`);
+          container.style.setProperty('--layer2-x', `${l2x}%`);
+          container.style.setProperty('--layer2-y', `${l2y}%`);
+          container.style.setProperty('--layer3-x', `${l3x}%`);
+          container.style.setProperty('--layer3-y', `${l3y}%`);
+        });
+        requestAnimationFrame(animateBentoNoise);
+      }
+      requestAnimationFrame(animateBentoNoise);
+
+      // ── TRACING BEAM SCROLL UPDATER ─────────────────────────
+      const tracingBeam = document.getElementById('features-tracing-beam');
+      if (tracingBeam) {
+        const dot = tracingBeam.querySelector('.tracing-beam-dot');
+        const pathGlow = tracingBeam.querySelector('.tracing-beam-path-glow');
+        
+        const updateBeam = () => {
+          const rect = tracingBeam.getBoundingClientRect();
+          const viewportHeight = window.innerHeight;
+          
+          // Start when top is at 60% of viewport, end when bottom is at 40%
+          const start = rect.top - viewportHeight * 0.6;
+          const height = rect.height;
+          
+          let progress = 0;
+          if (start < 0) {
+            progress = Math.min(1, Math.max(0, -start / (height - viewportHeight * 0.2)));
+          }
+          
+          // Update dot top (clamped within bento container height)
+          const dotY = progress * height;
+          dot.style.setProperty('--dot-y', `${dotY}px`);
+          
+          // Update path dashoffset
+          const pathLength = pathGlow.getTotalLength();
+          pathGlow.style.strokeDasharray = pathLength;
+          pathGlow.style.strokeDashoffset = pathLength * (1 - progress);
+        };
+        
+        window.addEventListener('scroll', updateBeam);
+        window.addEventListener('resize', updateBeam);
+        // Initial defer call to ensure layouts have settled
+        setTimeout(updateBeam, 250);
+      }
+
+      // ── CANVAS TEXT WORD FLIP ────────────────────────────────
+      class CanvasText {
+        constructor(element, text) {
+          this.element = element;
+          this.text = text;
+          this.canvas = document.createElement('canvas');
+          this.element.appendChild(this.canvas);
+          this.ctx = this.canvas.getContext('2d');
+          this.active = false;
+          this.animationRef = null;
+          this.startTime = 0;
+          this.colors = ['#ff6496', '#6496ff', '#ffc864'];
+          
+          this.updateDimensions = this.updateDimensions.bind(this);
+          this.animate = this.animate.bind(this);
+          
+          this.init();
+        }
+        
+        init() {
+          this.updateDimensions();
+          window.addEventListener('resize', this.updateDimensions);
+        }
+        
+        updateDimensions() {
+          // Temporarily make element visible to measure size
+          const originalOpacity = this.element.style.opacity;
+          const originalDisplay = this.element.style.display;
+          
+          this.element.style.opacity = '0';
+          this.element.style.display = 'inline-block';
+          
+          const span = document.createElement('span');
+          span.style.font = window.getComputedStyle(this.element).font;
+          span.style.fontFamily = 'monospace';
+          span.style.fontWeight = '700';
+          span.textContent = this.text;
+          document.body.appendChild(span);
+          
+          const rect = span.getBoundingClientRect();
+          document.body.removeChild(span);
+          
+          this.element.style.opacity = originalOpacity;
+          this.element.style.display = originalDisplay;
+          
+          this.width = Math.ceil(rect.width) || 120;
+          this.height = Math.ceil(rect.height) || 40;
+          
+          const dpr = window.devicePixelRatio || 1;
+          this.canvas.width = this.width * dpr;
+          this.canvas.height = this.height * dpr;
+          this.canvas.style.width = `${this.width}px`;
+          this.canvas.style.height = `${this.height}px`;
+          
+          const fontSize = window.getComputedStyle(this.element).fontSize;
+          this.font = `bold ${fontSize} monospace`;
+        }
+        
+        start() {
+          if (this.active) return;
+          this.active = true;
+          this.startTime = performance.now();
+          this.animate();
+        }
+        
+        stop() {
+          this.active = false;
+          if (this.animationRef) {
+            cancelAnimationFrame(this.animationRef);
+            this.animationRef = null;
+          }
+        }
+        
+        animate(time) {
+          if (!this.active) return;
+          
+          const elapsed = (time - this.startTime) / 1000 || 0;
+          const duration = 6; 
+          const phase = (elapsed / duration) * Math.PI * 2;
+          
+          const dpr = window.devicePixelRatio || 1;
+          const ctx = this.ctx;
+          
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+          ctx.clearRect(0, 0, this.width, this.height);
+          
+          // Draw text as mask
+          ctx.globalCompositeOperation = 'source-over';
+          ctx.font = this.font;
+          ctx.textBaseline = 'middle';
+          ctx.textAlign = 'left';
+          ctx.fillStyle = '#000';
+          ctx.fillText(this.text, 0, this.height / 2);
+          
+          // Mask with theme-appropriate background color
+          ctx.globalCompositeOperation = 'source-in';
+          ctx.fillStyle = document.documentElement.getAttribute('data-theme') === 'light' ? '#1d1c1a' : '#fff';
+          ctx.fillRect(0, 0, this.width, this.height);
+          
+          // Wavy lines inside letters
+          ctx.globalCompositeOperation = 'source-atop';
+          const numLines = 16;
+          const lineGap = this.height / numLines;
+          
+          for (let i = 0; i < numLines; i++) {
+            const y = i * lineGap + lineGap / 2;
+            const curve1 = Math.sin(phase + i * 0.12) * 8;
+            const curve2 = Math.cos(phase + i * 0.28) * 6;
+            
+            ctx.strokeStyle = this.colors[i % this.colors.length];
+            ctx.lineWidth = 1.8;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.bezierCurveTo(
+              this.width * 0.33, y + curve1,
+              this.width * 0.66, y + curve2,
+              this.width, y
+            );
+            ctx.stroke();
+          }
+          
+          this.animationRef = requestAnimationFrame(this.animate);
+        }
+      }
+      
+      const flipContainer = document.getElementById('hero-flip-container');
+      if (flipContainer) {
+        const wordsElements = flipContainer.querySelectorAll('.flip-word');
+        const instances = [];
+        
+        wordsElements.forEach((el) => {
+          const text = el.getAttribute('data-word');
+          instances.push(new CanvasText(el, text));
+        });
+        
+        let currentIndex = 0;
+        
+        const flipWord = () => {
+          instances[currentIndex].stop();
+          wordsElements[currentIndex].classList.remove('active');
+          
+          currentIndex = (currentIndex + 1) % instances.length;
+          
+          const activeInstance = instances[currentIndex];
+          flipContainer.style.width = `${activeInstance.width + 32}px`;
+          
+          wordsElements[currentIndex].classList.add('active');
+          activeInstance.start();
+        };
+        
+        const initFlip = () => {
+          const activeInstance = instances[currentIndex];
+          flipContainer.style.width = `${activeInstance.width + 32}px`;
+          activeInstance.start();
+        };
+        
+        setTimeout(initFlip, 200);
+        setInterval(flipWord, 3200);
+      }
     }
   }
 });
