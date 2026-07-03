@@ -1666,6 +1666,316 @@
     [data-theme="light"] .footer-bottom {
       color: var(--color-text-muted);
     }
+
+    /* ── SHADCN & ACETERNITY PREMIUM COMPONENTS STYLING ── */
+    
+    /* 1. Sparkles Core Background */
+    #hero-sparkles {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.55;
+    }
+    .hero {
+      position: relative; /* context for sparkles canvas */
+    }
+    .hero-content {
+      position: relative;
+      z-index: 2; /* lift content above sparkles */
+    }
+    .hero-terminal {
+      position: relative;
+      z-index: 2;
+    }
+
+    /* 2. Evervault Card Component */
+    .evervault-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      min-height: 240px;
+      overflow: hidden;
+      border-radius: var(--radius-lg);
+      background: var(--color-terminal-bg);
+      border: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .evervault-inner {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .evervault-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      background: radial-gradient(180px at var(--mouse-x, 0px) var(--mouse-y, 0px), var(--color-primary-highlight), transparent);
+    }
+    .evervault-container:hover .evervault-glow {
+      opacity: 1;
+    }
+    .evervault-chars {
+      position: absolute;
+      inset: 0;
+      word-break: break-all;
+      font-family: var(--font-mono);
+      font-size: 10px;
+      line-height: 1.1;
+      color: var(--color-primary);
+      opacity: 0.15;
+      padding: var(--space-3);
+      pointer-events: none;
+      user-select: none;
+      mask-image: radial-gradient(150px at var(--mouse-x, 0px) var(--mouse-y, 0px), white, transparent);
+      -webkit-mask-image: radial-gradient(150px at var(--mouse-x, 0px) var(--mouse-y, 0px), white, transparent);
+      transition: opacity 0.3s ease;
+    }
+    .evervault-container:hover .evervault-chars {
+      opacity: 0.35;
+    }
+    .evervault-content {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-4);
+    }
+
+    /* 3. Placeholders & Vanish Input Component */
+    .vanish-form-container {
+      position: relative;
+      width: 100%;
+      max-width: 480px;
+      margin-inline: auto;
+    }
+    .vanish-form {
+      position: relative;
+      display: flex;
+      align-items: center;
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      border-radius: 9999px;
+      padding: 4px;
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      height: 52px;
+    }
+    .vanish-form:focus-within {
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 2px var(--color-primary-highlight);
+    }
+    .vanish-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: var(--space-2) var(--space-5);
+      color: var(--color-text);
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      height: 100%;
+      outline: none;
+      z-index: 5;
+    }
+    .vanish-input.animating {
+      color: transparent !important;
+    }
+    .vanish-btn {
+      height: 40px;
+      width: 40px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: var(--color-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform var(--transition-fast), background var(--transition-fast);
+      margin-right: 4px;
+      z-index: 6;
+      flex-shrink: 0;
+      font-weight: bold;
+    }
+    .vanish-btn:hover:not(:disabled) {
+      background: var(--color-primary-dim);
+      transform: scale(1.05);
+    }
+    .vanish-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      background: var(--color-border);
+      color: var(--color-text-faint);
+    }
+    .vanish-canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+      z-index: 10;
+      width: 100%;
+      height: 100%;
+    }
+    .vanish-placeholders-wrapper {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      padding-left: var(--space-5);
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 2;
+    }
+    .vanish-placeholder {
+      font-family: var(--font-mono);
+      font-size: var(--text-sm);
+      color: var(--color-text-faint);
+      position: absolute;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.4s ease;
+      opacity: 0;
+      transform: translateY(20px);
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      max-width: calc(100% - 60px);
+      text-align: left;
+    }
+    .vanish-placeholder.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .vanish-placeholder.exit {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+
+    /* 4. Compare Slider Component (Vault-Guard) */
+    .compare-container {
+      position: relative;
+      width: 100%;
+      height: 240px;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+      background: var(--color-terminal-bg);
+      overflow: hidden;
+      user-select: none;
+      cursor: ew-resize;
+    }
+    .compare-panel {
+      position: absolute;
+      inset: 0;
+      padding: var(--space-5) var(--space-6);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      text-align: left;
+    }
+    .compare-panel.before {
+      z-index: 1;
+      background: var(--color-terminal-bg);
+    }
+    .compare-panel.after {
+      z-index: 2;
+      background: var(--color-surface);
+      clip-path: inset(0 0 0 var(--percent, 50%));
+      border-left: 1px solid var(--color-primary);
+    }
+    .compare-handle {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: var(--percent, 50%);
+      width: 2px;
+      background: var(--color-primary);
+      z-index: 3;
+      pointer-events: none;
+      box-shadow: 0 0 10px var(--color-primary);
+    }
+    .compare-handle-button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--color-primary);
+      color: var(--color-bg);
+      border: 2px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-md);
+      font-size: var(--text-xs);
+      font-weight: bold;
+    }
+    .compare-label {
+      position: absolute;
+      top: var(--space-3);
+      font-family: var(--font-mono);
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 2px 6px;
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-sm);
+      z-index: 4;
+      pointer-events: none;
+    }
+    .compare-label.before {
+      left: var(--space-4);
+      color: var(--color-accent-red);
+    }
+    .compare-label.after {
+      right: var(--space-4);
+      color: var(--color-primary);
+    }
+
+    /* 5. Hover Border Gradient Component */
+    .hover-gradient-card {
+      position: relative;
+      border: 1px solid var(--color-border) !important;
+      transition: border-color var(--transition-fast) !important;
+    }
+    .hover-gradient-card::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: inherit;
+      padding: 1px;
+      background: radial-gradient(
+        150px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
+        var(--color-primary),
+        transparent
+      );
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+      z-index: 1;
+    }
+    .hover-gradient-card:hover::after {
+      opacity: 0.75;
+    }
+    [data-theme="light"] .hover-gradient-card::after {
+      background: radial-gradient(
+        150px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
+        rgba(194, 65, 12, 0.4),
+        transparent
+      );
+    }
   </style>
 </head>
 <body>
@@ -1733,7 +2043,7 @@
       DEPLOYMANTIS v0.1 · EARLY ACCESS 
     </div>
     
-    <h1>
+    <h1 class="scramble-text">
       Your AI stack,<br>
       finally under control.
     </h1>
@@ -1803,7 +2113,7 @@
   <div class="section-inner">
     <div class="features-intro">
       <p class="section-label">Services</p>
-      <h2 class="section-title" id="features-title">Nine services. One pipe. Nothing leaks.</h2>
+      <h2 class="section-title scramble-text" id="features-title">Nine services. One pipe. Nothing leaks.</h2>
       <p class="section-sub">DeployMantis intercepts, sanitizes, and controls all outbound AI traffic through specialized local nodes.</p>
     </div>
 
@@ -1823,17 +2133,29 @@
         </div>
         
         <div class="bento-visual">
-          <div class="vg-visual">
-            <div class="vg-panel">
-              <span class="vg-title">Outbound Prompt</span>
-              <div class="vg-box" id="vg-box-before">
-                Use AWS key AKIAIOSFODNN7INVALID to complete this deploy job...
+          <div class="compare-container" id="vg-compare">
+            <!-- Label indicators -->
+            <span class="compare-label before">Outbound Prompt</span>
+            <span class="compare-label after">Sanitized Payload</span>
+            
+            <!-- Before panel (raw keys) -->
+            <div class="compare-panel before">
+              <div class="vg-box" style="border:none; background:transparent; min-height:auto; padding:0;">
+                Use AWS key <span class="key-raw" style="color:var(--color-accent-red); font-weight:bold;">AKIAIOSFODNN7INVALID</span> to complete this deploy job...
               </div>
             </div>
-            <div class="vg-panel">
-              <span class="vg-title">Sanitized Payload</span>
-              <div class="vg-box" id="vg-box-after">
+            
+            <!-- After panel (masked keys) -->
+            <div class="compare-panel after">
+              <div class="vg-box" style="border:none; background:transparent; min-height:auto; padding:0;">
                 Use AWS key <span class="key-masked">████████████████████</span> to complete this deploy job...
+              </div>
+            </div>
+            
+            <!-- Slider handle -->
+            <div class="compare-handle">
+              <div class="compare-handle-button">
+                &larr;&rarr;
               </div>
             </div>
           </div>
@@ -1990,12 +2312,18 @@
           </p>
         </div>
         
-        <div class="bento-visual">
-          <div class="ms-visual-terminal">
-            <span>$ git checkout feat/scanner</span>
-            <span>Switched to branch 'feat/scanner'</span>
-            <span>$ curl http://localhost:5004/context</span>
-            <span class="ms-json">{ "last_active_file": "vault-guard/main.py", "todos_pending": 3 }</span>
+        <div class="bento-visual evervault-container" id="snap-evervault">
+          <div class="evervault-inner">
+            <div class="evervault-glow"></div>
+            <div class="evervault-chars"></div>
+            <div class="evervault-content">
+              <div class="ms-visual-terminal" style="position:relative; z-index:2; background:rgba(10, 12, 14, 0.85); backdrop-filter:blur(4px); padding:var(--space-4); border:1px solid var(--color-border); border-radius:var(--radius-md); width:100%;">
+                <span>$ git checkout feat/scanner</span><br>
+                <span>Switched to branch 'feat/scanner'</span><br>
+                <span>$ curl http://localhost:5004/context</span><br>
+                <span class="ms-json">{ "last_active_file": "vault-guard/main.py", "todos_pending": 3 }</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2006,17 +2334,17 @@
     <div class="infra-section">
       <h4 class="infra-heading">Core Infrastructure Services</h4>
       <div class="infra-grid">
-        <div class="infra-card">
+        <div class="infra-card hover-gradient-card">
           <span class="infra-tag">Gateway</span>
           <h4 class="infra-title">core-api</h4>
           <p class="infra-desc">FastAPI-powered central routing layer. Handles asynchronous validation, telemetry extraction, and coordinates microservice pipelines with &lt;5ms overhead.</p>
         </div>
-        <div class="infra-card">
+        <div class="infra-card hover-gradient-card">
           <span class="infra-tag">Observability</span>
           <h4 class="infra-title">Odysseus Dashboard</h4>
           <p class="infra-desc">Central dashboard for microservice health, budget forecasting, and configuration. Live-tweak chaos injection rates and view audit logs in real time.</p>
         </div>
-        <div class="infra-card">
+        <div class="infra-card hover-gradient-card">
           <span class="infra-tag">Resilience</span>
           <h4 class="infra-title">SwarmChaos</h4>
           <p class="infra-desc">Chaos testing orchestration. Inject latency, simulated timeouts, API errors, and synthetic model hallucinations to test the self-healing ability of your agent clusters.</p>
@@ -2031,27 +2359,27 @@
   <div class="section-inner">
     <div class="how-intro">
       <p class="section-label">Setup</p>
-      <h2 class="section-title" id="how-title">docker compose up. That's it. Everything else is already configured.</h2>
+      <h2 class="section-title scramble-text" id="how-title">docker compose up. That's it. Everything else is already configured.</h2>
       <p class="section-sub">DeployMantis runs entirely on your local infrastructure. Zero data leaves your system.</p>
     </div>
 
     <div class="steps">
-      <div class="step">
+      <div class="step hover-gradient-card">
         <span class="step-num">01</span>
         <h3>Clone &amp; configure</h3>
         <p>Clone the git repository and copy variables into your local <code>.env</code> file.</p>
       </div>
-      <div class="step">
+      <div class="step hover-gradient-card">
         <span class="step-num">02</span>
         <h3>Launch gateway</h3>
         <p>Run compose up to launch all nine gateway services in isolated Docker containers.</p>
       </div>
-      <div class="step">
+      <div class="step hover-gradient-card">
         <span class="step-num">03</span>
         <h3>Redirect API base</h3>
         <p>Change your LLM API endpoint to <code>localhost:4000</code>. Intercept begins immediately.</p>
       </div>
-      <div class="step">
+      <div class="step hover-gradient-card">
         <span class="step-num">04</span>
         <h3>Verify logs</h3>
         <p>Open local dashboard at <code>localhost:3000</code> to monitor alerts and budget usage.</p>
@@ -2292,11 +2620,11 @@
   <h2>50 teams. No cloud. No telemetry. No nonsense.</h2>
   <p style="color:var(--color-text-muted)">Secure your AI integration locally. Claim permanent early access pricing.</p>
   
-  <div class="cta-form-container">
-    <form class="cta-form" id="signup-form" novalidate>
-      <input type="email" name="email" placeholder="you@yourcompany.com" required aria-label="Work email address" id="signup-email" autocomplete="email">
-      <button type="submit" class="btn btn-primary" id="signup-btn">
-        <span class="btn-text">Run it locally →</span>
+  <div class="vanish-form-container">
+    <form class="vanish-form" id="signup-form" novalidate>
+      <input type="email" name="email" required aria-label="Work email address" id="signup-email" autocomplete="email" class="vanish-input">
+      <button type="submit" class="vanish-btn" id="signup-btn">
+        <span class="btn-text">&rarr;</span>
         <span class="loading-spinner" id="signup-spinner"></span>
       </button>
     </form>
@@ -2608,21 +2936,369 @@
     observer.observe(tokenFill.parentElement);
   }
 
-  // ── VAULT-GUARD BEFORE/AFTER TOGGLE ──────────────────────
-  const vgBefore = document.getElementById('vg-box-before');
-  const vgAfter = document.getElementById('vg-box-after');
-  let vgMaskedState = true;
-  
-  setInterval(() => {
-    if (vgBefore && vgAfter) {
-      if (vgMaskedState) {
-        vgAfter.innerHTML = 'Use AWS key <span class="key-raw" style="color:var(--color-accent-red)">AKIAIOSFODNN7INVALID</span> to complete this deploy job...';
-      } else {
-        vgAfter.innerHTML = 'Use AWS key <span class="key-masked">████████████████████</span> to complete this deploy job...';
+  // ── VAULT-GUARD INTERACTIVE COMPARE SLIDER ────────────────
+  const vgCompare = document.getElementById('vg-compare');
+  if (vgCompare) {
+    const updateCompare = (clientX) => {
+      const rect = vgCompare.getBoundingClientRect();
+      let x = clientX - rect.left;
+      x = Math.max(0, Math.min(rect.width, x));
+      const percent = (x / rect.width) * 100;
+      vgCompare.style.setProperty('--percent', `${percent}%`);
+    };
+
+    vgCompare.addEventListener('mousemove', (e) => {
+      updateCompare(e.clientX);
+    });
+    vgCompare.addEventListener('mouseleave', () => {
+      vgCompare.style.transition = 'all 0.5s ease';
+      vgCompare.style.setProperty('--percent', '50%');
+      setTimeout(() => {
+        vgCompare.style.transition = '';
+      }, 500);
+    });
+    vgCompare.addEventListener('touchmove', (e) => {
+      if (e.touches[0]) {
+        updateCompare(e.touches[0].clientX);
       }
-      vgMaskedState = !vgMaskedState;
+    }, { passive: true });
+  }
+
+  // ── MANTISSNAP EVERVAULT CARD EFFECT ──────────────────────
+  const evContainer = document.getElementById('snap-evervault');
+  if (evContainer) {
+    const charsContainer = evContainer.querySelector('.evervault-chars');
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()_+-=[]{}|;:,./<>?';
+    
+    const generateChars = (length) => {
+      let result = '';
+      for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+      }
+      return result;
+    };
+    
+    if (charsContainer) {
+      charsContainer.textContent = generateChars(1500);
     }
-  }, 2500);
+    
+    evContainer.addEventListener('mousemove', (e) => {
+      const rect = evContainer.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      evContainer.style.setProperty('--mouse-x', `${x}px`);
+      evContainer.style.setProperty('--mouse-y', `${y}px`);
+      
+      if (charsContainer && Math.random() > 0.6) {
+        charsContainer.textContent = generateChars(1500);
+      }
+    });
+
+    setInterval(() => {
+      if (charsContainer && evContainer.matches(':hover')) {
+        charsContainer.textContent = generateChars(1500);
+      }
+    }, 150);
+  }
+
+  // ── HOVER GRADIENT CARD TRACKING ──────────────────────────
+  const gradientCards = document.querySelectorAll('.hover-gradient-card');
+  gradientCards.forEach(card => {
+    card.addEventListener('mousemove', (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+    });
+  });
+
+  // ── SPARKLES CORE BACKGROUND ──────────────────────────────
+  const sparklesCanvas = document.createElement('canvas');
+  sparklesCanvas.id = 'hero-sparkles';
+  const heroSection = document.querySelector('.hero');
+  if (heroSection) {
+    heroSection.insertBefore(sparklesCanvas, heroSection.firstChild);
+    const sCtx = sparklesCanvas.getContext('2d');
+    let sW = sparklesCanvas.width = heroSection.clientWidth;
+    let sH = sparklesCanvas.height = heroSection.clientHeight;
+    
+    const resizeSparkles = () => {
+      sW = sparklesCanvas.width = heroSection.clientWidth;
+      sH = sparklesCanvas.height = heroSection.clientHeight;
+    };
+    window.addEventListener('resize', resizeSparkles);
+    
+    const particles = [];
+    const maxParticles = 45;
+    
+    class Sparkle {
+      constructor() {
+        this.reset();
+        this.y = Math.random() * sH;
+      }
+      reset() {
+        this.x = Math.random() * sW;
+        this.y = sH + 10;
+        this.size = Math.random() * 2 + 0.4;
+        this.speedY = -(Math.random() * 0.35 + 0.1);
+        this.speedX = (Math.random() - 0.5) * 0.15;
+        this.opacity = Math.random() * 0.4 + 0.1;
+        this.fade = Math.random() * 0.004 + 0.002;
+      }
+      update() {
+        this.y += this.speedY;
+        this.x += this.speedX;
+        this.opacity -= this.fade;
+        if (this.opacity <= 0 || this.y < 0 || this.x < 0 || this.x > sW) {
+          this.reset();
+        }
+      }
+      draw() {
+        sCtx.fillStyle = `rgba(59, 130, 246, ${this.opacity})`;
+        if (document.documentElement.getAttribute('data-theme') === 'light') {
+          sCtx.fillStyle = `rgba(194, 65, 12, ${this.opacity})`;
+        }
+        sCtx.beginPath();
+        sCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        sCtx.fill();
+      }
+    }
+    
+    for (let i = 0; i < maxParticles; i++) {
+      particles.push(new Sparkle());
+    }
+    
+    const renderSparkles = () => {
+      sCtx.clearRect(0, 0, sW, sH);
+      particles.forEach(p => {
+        p.update();
+        p.draw();
+      });
+      requestAnimationFrame(renderSparkles);
+    };
+    renderSparkles();
+  }
+
+  // ── SCRAMBLE TEXT EFFECT ──────────────────────────────────
+  const scrambleElements = document.querySelectorAll('.scramble-text');
+  
+  function triggerScramble(element, duration = 1200) {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,./<>?';
+    const originalText = element.getAttribute('data-original-text') || element.innerHTML;
+    if (!element.getAttribute('data-original-text')) {
+      element.setAttribute('data-original-text', originalText);
+    }
+    
+    const textContent = originalText.replace(/<br\s*\/?>/gi, '\n');
+    let startTime = null;
+    
+    const animate = (timestamp) => {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      
+      let result = '';
+      for (let i = 0; i < textContent.length; i++) {
+        if (textContent[i] === '\n') {
+          result += '<br>';
+          continue;
+        }
+        if (textContent[i] === ' ') {
+          result += ' ';
+          continue;
+        }
+        const charProgress = i / textContent.length;
+        if (progress > charProgress) {
+          result += textContent[i];
+        } else {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+      }
+      
+      element.innerHTML = result;
+      
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+    requestAnimationFrame(animate);
+  }
+
+  if (scrambleElements.length > 0) {
+    const scrambleObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          triggerScramble(entry.target);
+          scrambleObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+
+    scrambleElements.forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        triggerScramble(el, 800);
+      });
+      scrambleObserver.observe(el);
+    });
+  }
+
+  // ── PLACEHOLDERS & VANISH INPUT ───────────────────────────
+  window.vanishControl = (() => {
+    const input = document.getElementById('signup-email');
+    const form = document.getElementById('signup-form');
+    if (!input || !form) return null;
+    
+    const canvas = document.createElement('canvas');
+    canvas.className = 'vanish-canvas';
+    form.appendChild(canvas);
+    
+    const placeholders = [
+      "security@enterprise.com",
+      "platform-lead@hashicorp.com",
+      "infra-ops@kubernetes.net",
+      "ciso@security.io",
+      "you@yourcompany.com"
+    ];
+    
+    const wrapper = document.createElement('div');
+    wrapper.className = 'vanish-placeholders-wrapper';
+    form.insertBefore(wrapper, input);
+    
+    placeholders.forEach((ph, idx) => {
+      const p = document.createElement('div');
+      p.className = 'vanish-placeholder' + (idx === 0 ? ' active' : '');
+      p.textContent = ph;
+      wrapper.appendChild(p);
+    });
+    
+    let currentPh = 0;
+    const rotatePlaceholder = () => {
+      if (input.value) return;
+      const elActive = wrapper.children[currentPh];
+      if (elActive) {
+        elActive.classList.remove('active');
+        elActive.classList.add('exit');
+      }
+      
+      currentPh = (currentPh + 1) % placeholders.length;
+      
+      const elNext = wrapper.children[currentPh];
+      if (elNext) {
+        elNext.classList.remove('exit');
+        elNext.classList.add('active');
+      }
+    };
+    
+    let phInterval = setInterval(rotatePlaceholder, 3000);
+    
+    input.addEventListener('focus', () => {
+      wrapper.style.opacity = '0';
+    });
+    input.addEventListener('blur', () => {
+      if (!input.value) {
+        wrapper.style.opacity = '1';
+      }
+    });
+    input.addEventListener('input', () => {
+      if (input.value) {
+        wrapper.style.opacity = '0';
+      } else {
+        wrapper.style.opacity = '1';
+      }
+    });
+    
+    let particles = [];
+    
+    const drawAndGetParticles = () => {
+      const rect = input.getBoundingClientRect();
+      const width = rect.width;
+      const height = rect.height;
+      const dpr = window.devicePixelRatio || 1;
+      
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, height);
+      
+      const style = window.getComputedStyle(input);
+      ctx.font = `${style.fontSize} ${style.fontFamily}`;
+      ctx.fillStyle = style.color || '#fff';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(input.value, 16, height / 2);
+      
+      const imgData = ctx.getImageData(0, 0, width * dpr, height * dpr);
+      const data = imgData.data;
+      particles = [];
+      
+      for (let y = 0; y < height * dpr; y += 2) {
+        for (let x = 0; x < width * dpr; x += 2) {
+          const idx = (y * width * dpr + x) * 4;
+          const alpha = data[idx + 3];
+          if (alpha > 0) {
+            particles.push({
+              x: x / dpr,
+              y: y / dpr,
+              r: 1.2,
+              vx: (Math.random() - 0.5) * 2 - 0.5,
+              vy: (Math.random() - 0.5) * 2,
+              alpha: 1,
+              decay: Math.random() * 0.02 + 0.015
+            });
+          }
+        }
+      }
+    };
+    
+    return {
+      triggerVanish: (callback) => {
+        clearInterval(phInterval);
+        drawAndGetParticles();
+        input.classList.add('animating');
+        
+        const ctx = canvas.getContext('2d');
+        const rect = input.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        
+        const animate = () => {
+          ctx.clearRect(0, 0, width, height);
+          let activeParticles = 0;
+          
+          particles.forEach(p => {
+            if (p.alpha <= 0) return;
+            activeParticles++;
+            
+            p.x += p.vx;
+            p.y += p.vy;
+            p.alpha -= p.decay;
+            
+            let particleColor = 'rgba(59, 130, 246, ';
+            if (document.documentElement.getAttribute('data-theme') === 'light') {
+              particleColor = 'rgba(194, 65, 12, ';
+            }
+            ctx.fillStyle = particleColor + p.alpha + ')';
+            ctx.beginPath();
+            ctx.rect(p.x, p.y, p.r, p.r);
+            ctx.fill();
+          });
+          
+          if (activeParticles > 0) {
+            requestAnimationFrame(animate);
+          } else {
+            ctx.clearRect(0, 0, width, height);
+            callback();
+          }
+        };
+        
+        animate();
+      }
+    };
+  })();
 
 })();
 
@@ -2734,6 +3410,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const successCard = document.getElementById('signup-success');
   const successEmail = document.getElementById('success-email');
   
+
   if (signupForm) {
     signupForm.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -2754,37 +3431,54 @@ document.addEventListener('DOMContentLoaded', () => {
       if (btnText) btnText.style.display = 'none';
       if (spinner) spinner.style.display = 'block';
       
-      fetch("https://formsubmit.co/ajax/ojas@shelke.co.in", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          email: email,
-          _subject: "New DeployMantis Early Access Signup"
+      const submitData = () => {
+        fetch("https://formsubmit.co/ajax/ojas@shelke.co.in", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            email: email,
+            _subject: "New DeployMantis Early Access Signup"
+          })
         })
-      })
-      .then(response => {
-        if (response.ok) return response.json();
-        throw new Error('Network error.');
-      })
-      .then(data => {
-        if (signupForm) signupForm.style.display = 'none';
-        if (successCard) {
-          if (successEmail) successEmail.textContent = email;
-          successCard.style.display = 'block';
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        showError('Something went wrong. Please try again.');
-        
-        if (emailInput) emailInput.disabled = false;
-        if (submitBtn) submitBtn.disabled = false;
-        if (btnText) btnText.style.display = 'inline';
-        if (spinner) spinner.style.display = 'none';
-      });
+        .then(response => {
+          if (response.ok) return response.json();
+          throw new Error('Network error.');
+        })
+        .then(data => {
+          const vanishContainer = document.querySelector('.vanish-form-container');
+          if (vanishContainer) vanishContainer.style.display = 'none';
+          if (successCard) {
+            if (successEmail) successEmail.textContent = email;
+            successCard.style.display = 'block';
+          }
+        })
+        .catch(err => {
+          console.error(err);
+          showError('Something went wrong. Please try again.');
+          
+          if (emailInput) {
+            emailInput.disabled = false;
+            emailInput.classList.remove('animating');
+            emailInput.value = email;
+            const phWrapper = document.querySelector('.vanish-placeholders-wrapper');
+            if (phWrapper) phWrapper.style.opacity = '0';
+          }
+          if (submitBtn) submitBtn.disabled = false;
+          if (btnText) btnText.style.display = 'inline';
+          if (spinner) spinner.style.display = 'none';
+        });
+      };
+      
+      if (window.vanishControl) {
+        window.vanishControl.triggerVanish(() => {
+          submitData();
+        });
+      } else {
+        submitData();
+      }
     });
   }
   
