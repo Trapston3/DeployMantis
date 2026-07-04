@@ -768,7 +768,7 @@
     .bento-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: var(--space-12);
+      gap: 120px; /* generous spacing for centered tracing beam separator */
       align-items: center;
     }
     .bento-row.reverse {
@@ -1717,56 +1717,18 @@
       z-index: 2;
     }
 
-    /* 2. Noise Background Component (Bento Visual Containers) */
-    .noise-bg-container {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      z-index: 1;
-      overflow: hidden;
-      opacity: 0.15; /* subtle at rest */
-      transition: opacity 0.4s ease;
-    }
-    .bento-visual:hover .noise-bg-container {
-      opacity: 0.35; /* stronger on hover */
-    }
-    .noise-bg-gradient {
-      position: absolute;
-      inset: -50%;
-      width: 200%;
-      height: 200%;
-      opacity: 0.4;
-      mix-blend-mode: screen;
-      filter: blur(60px);
-    }
-    .noise-bg-gradient.layer-1 {
-      background: radial-gradient(circle at var(--layer1-x, 30%) var(--layer1-y, 40%), rgb(255, 100, 150) 0%, transparent 60%);
-    }
-    .noise-bg-gradient.layer-2 {
-      background: radial-gradient(circle at var(--layer2-x, 70%) var(--layer2-y, 60%), rgb(100, 150, 255) 0%, transparent 60%);
-    }
-    .noise-bg-gradient.layer-3 {
-      background: radial-gradient(circle at var(--layer3-x, 50%) var(--layer3-y, 80%), rgb(255, 200, 100) 0%, transparent 60%);
-    }
-    .noise-bg-overlay {
-      position: absolute;
-      inset: 0;
-      background-image: url('https://assets.aceternity.com/noise.webp');
-      background-size: cover;
-      opacity: 0.25;
-      mix-blend-mode: overlay;
-    }
+    /* 2. Noise Background Component (Bento Visual Containers) - Removed */
 
     /* 3. Tracing Beam Component */
     .tracing-beam-wrapper {
       position: relative;
       width: 100%;
       margin-inline: auto;
-      padding-left: var(--space-8);
     }
     .tracing-beam-bar {
       position: absolute;
-      left: 0;
+      left: 50%;
+      transform: translateX(-50%);
       top: 0;
       bottom: 0;
       width: 20px;
@@ -1800,9 +1762,6 @@
     }
     
     @media (max-width: 1024px) {
-      .tracing-beam-wrapper {
-        padding-left: 0;
-      }
       .tracing-beam-bar {
         display: none;
       }
@@ -2050,7 +2009,6 @@
       border-radius: var(--border-radius);
       isolation: isolate;
       transform: translate3d(0, 0, 0.01px);
-      display: grid;
       border: 1px solid var(--color-border);
       background: var(--card-bg, #120F17);
       overflow: visible;
@@ -2383,13 +2341,7 @@
           </div>
           
           <div class="bento-visual border-glow-card">
-            <!-- Noise Background Component -->
-            <div class="noise-bg-container">
-              <div class="noise-bg-gradient layer-1"></div>
-              <div class="noise-bg-gradient layer-2"></div>
-              <div class="noise-bg-gradient layer-3"></div>
-              <div class="noise-bg-overlay"></div>
-            </div>
+
             
             <div class="compare-container" id="vg-compare" style="position:relative; z-index:10;">
               <!-- Label indicators -->
@@ -2431,13 +2383,7 @@
           </div>
           
           <div class="bento-visual border-glow-card" style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-4); align-items:center;">
-            <!-- Noise Background Component -->
-            <div class="noise-bg-container">
-              <div class="noise-bg-gradient layer-1"></div>
-              <div class="noise-bg-gradient layer-2"></div>
-              <div class="noise-bg-gradient layer-3"></div>
-              <div class="noise-bg-overlay"></div>
-            </div>
+
             
             <div class="mv-code-panel" style="position:relative; z-index:10;">
               <span>// main.py</span><br>
@@ -2480,13 +2426,7 @@
           </div>
           
           <div class="bento-visual border-glow-card">
-            <!-- Noise Background Component -->
-            <div class="noise-bg-container">
-              <div class="noise-bg-gradient layer-1"></div>
-              <div class="noise-bg-gradient layer-2"></div>
-              <div class="noise-bg-gradient layer-3"></div>
-              <div class="noise-bg-overlay"></div>
-            </div>
+
             
             <div class="tb-budget-container" style="position:relative; z-index:10;">
               <div class="tb-meter-wrapper">
@@ -2525,13 +2465,7 @@
           </div>
           
           <div class="bento-visual border-glow-card">
-            <!-- Noise Background Component -->
-            <div class="noise-bg-container">
-              <div class="noise-bg-gradient layer-1"></div>
-              <div class="noise-bg-gradient layer-2"></div>
-              <div class="noise-bg-gradient layer-3"></div>
-              <div class="noise-bg-overlay"></div>
-            </div>
+
             
             <div class="fm-visual-route" style="position:relative; z-index:10;">
               <div class="fm-node failed" id="fm-node-primary">OpenAI API (gpt-4o) [503 Service Unavailable]</div>
@@ -2555,13 +2489,7 @@
           </div>
           
           <div class="bento-visual border-glow-card">
-            <!-- Noise Background Component -->
-            <div class="noise-bg-container">
-              <div class="noise-bg-gradient layer-1"></div>
-              <div class="noise-bg-gradient layer-2"></div>
-              <div class="noise-bg-gradient layer-3"></div>
-              <div class="noise-bg-overlay"></div>
-            </div>
+
             
             <div class="st-visual" style="position:relative; z-index:10;">
               <div class="st-trace-header">
@@ -2603,13 +2531,7 @@
           </div>
           
           <div class="bento-visual border-glow-card" id="snap-terminal-wrapper">
-            <!-- Noise Background Component -->
-            <div class="noise-bg-container">
-              <div class="noise-bg-gradient layer-1"></div>
-              <div class="noise-bg-gradient layer-2"></div>
-              <div class="noise-bg-gradient layer-3"></div>
-              <div class="noise-bg-overlay"></div>
-            </div>
+
             
             <div class="ms-visual-terminal" style="position:relative; z-index:10;">
               <span>$ git checkout feat/scanner</span><br>
@@ -3370,6 +3292,9 @@
       inner.style.justifyContent = style.justifyContent;
       inner.style.alignItems = style.alignItems;
       inner.style.gap = style.gap;
+      inner.style.gridTemplateColumns = style.gridTemplateColumns;
+      inner.style.gridTemplateRows = style.gridTemplateRows;
+      inner.style.gridTemplateAreas = style.gridTemplateAreas;
       
       // Move all children to inner wrapper
       while (card.firstChild) {
@@ -4039,32 +3964,7 @@ document.addEventListener('DOMContentLoaded', () => {
         stagger: 0.12,
         ease: "power3.out"
       });
-      // ── BENTO NOISE BACKGROUND ANIMATION ────────────────────
-      function animateBentoNoise(time) {
-        const containers = document.querySelectorAll('.noise-bg-container');
-        containers.forEach((container, index) => {
-          const t = time * 0.00025 + index * 50;
-          
-          // Smooth sine/cosine variations for organic float
-          const l1x = 30 + Math.sin(t) * 18;
-          const l1y = 40 + Math.cos(t * 0.8) * 18;
-          
-          const l2x = 70 + Math.cos(t * 1.15) * 18;
-          const l2y = 60 + Math.sin(t * 0.95) * 18;
-          
-          const l3x = 50 + Math.sin(t * 0.75) * 20;
-          const l3y = 80 + Math.cos(t * 1.35) * 18;
-          
-          container.style.setProperty('--layer1-x', `${l1x}%`);
-          container.style.setProperty('--layer1-y', `${l1y}%`);
-          container.style.setProperty('--layer2-x', `${l2x}%`);
-          container.style.setProperty('--layer2-y', `${l2y}%`);
-          container.style.setProperty('--layer3-x', `${l3x}%`);
-          container.style.setProperty('--layer3-y', `${l3y}%`);
-        });
-        requestAnimationFrame(animateBentoNoise);
-      }
-      requestAnimationFrame(animateBentoNoise);
+
 
       // ── TRACING BEAM SCROLL UPDATER ─────────────────────────
       const tracingBeam = document.getElementById('features-tracing-beam');
