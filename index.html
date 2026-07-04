@@ -810,13 +810,10 @@
       flex-direction: column;
       gap: var(--space-3);
       text-align: left;
-      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      transition: transform var(--transition-fast);
     }
     .infra-card:hover {
-      border-color: var(--color-primary-dim);
       transform: translateY(-2px);
-      box-shadow: 0 0 20px var(--color-border-glow);
-      transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
     }
     .infra-tag {
       font-family: var(--font-mono);
@@ -892,12 +889,6 @@
       min-height: 240px;
       box-shadow: var(--shadow-md);
       position: relative;
-      overflow: hidden;
-      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-    }
-    .bento-visual:hover {
-      border-color: var(--color-primary-dim);
-      box-shadow: var(--shadow-md), 0 0 24px var(--color-border-glow);
     }
     
     /* Vault-Guard before/after visual */
@@ -1228,13 +1219,10 @@
       display: flex;
       flex-direction: column;
       gap: var(--space-3);
-      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+      transition: transform var(--transition-fast);
     }
     .step:hover {
-      border-color: var(--color-primary-dim);
-      box-shadow: 0 0 16px var(--color-border-glow);
       transform: translateY(-2px);
-      transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
     }
     .step-num {
       font-family: var(--font-mono);
@@ -2048,40 +2036,171 @@
       color: var(--color-primary);
     }
 
-    /* 5. Hover Border Gradient Component */
-    .hover-gradient-card {
+    /* 5. BorderGlow Component (React Bits) */
+    .border-glow-card {
+      --edge-proximity: 0;
+      --cursor-angle: 45deg;
+      --edge-sensitivity: 30;
+      --color-sensitivity: calc(var(--edge-sensitivity) + 20);
+      --border-radius: 28px;
+      --glow-padding: 40px;
+      --cone-spread: 25;
+
       position: relative;
-      border: 1px solid var(--color-border) !important;
-      transition: border-color var(--transition-fast) !important;
+      border-radius: var(--border-radius);
+      isolation: isolate;
+      transform: translate3d(0, 0, 0.01px);
+      display: grid;
+      border: 1px solid var(--color-border);
+      background: var(--card-bg, #120F17);
+      overflow: visible;
+      box-shadow:
+        rgba(0, 0, 0, 0.1) 0px 1px 2px,
+        rgba(0, 0, 0, 0.1) 0px 2px 4px,
+        rgba(0, 0, 0, 0.1) 0px 4px 8px,
+        rgba(0, 0, 0, 0.1) 0px 8px 16px,
+        rgba(0, 0, 0, 0.1) 0px 16px 32px,
+        rgba(0, 0, 0, 0.1) 0px 32px 64px;
     }
-    .hover-gradient-card::after {
-      content: '';
+
+    .border-glow-card::before,
+    .border-glow-card::after,
+    .border-glow-card > .edge-light {
+      content: "";
       position: absolute;
-      inset: -1px;
+      inset: 0;
       border-radius: inherit;
-      padding: 1px;
-      background: radial-gradient(
-        150px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
-        var(--color-primary),
-        transparent
-      );
-      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      -webkit-mask-composite: xor;
-      mask-composite: exclude;
-      pointer-events: none;
+      transition: opacity 0.25s ease-out;
+      z-index: -1;
+    }
+
+    .border-glow-card:not(:hover):not(.sweep-active)::before,
+    .border-glow-card:not(:hover):not(.sweep-active)::after,
+    .border-glow-card:not(:hover):not(.sweep-active) > .edge-light {
       opacity: 0;
-      transition: opacity var(--transition-fast);
+      transition: opacity 0.75s ease-in-out;
+    }
+
+    /* colored mesh-gradient border */
+    .border-glow-card::before {
+      border: 1px solid transparent;
+      background:
+        linear-gradient(var(--card-bg, #120F17) 0 100%) padding-box,
+        linear-gradient(rgb(255 255 255 / 0%) 0% 100%) border-box,
+        var(--gradient-one, radial-gradient(at 80% 55%, hsla(268, 100%, 76%, 1) 0px, transparent 50%)) border-box,
+        var(--gradient-two, radial-gradient(at 69% 34%, hsla(349, 100%, 74%, 1) 0px, transparent 50%)) border-box,
+        var(--gradient-three, radial-gradient(at 8% 6%, hsla(136, 100%, 78%, 1) 0px, transparent 50%)) border-box,
+        var(--gradient-four, radial-gradient(at 41% 38%, hsla(192, 100%, 64%, 1) 0px, transparent 50%)) border-box,
+        var(--gradient-five, radial-gradient(at 86% 85%, hsla(186, 100%, 74%, 1) 0px, transparent 50%)) border-box,
+        var(--gradient-six, radial-gradient(at 82% 18%, hsla(52, 100%, 65%, 1) 0px, transparent 50%)) border-box,
+        var(--gradient-seven, radial-gradient(at 51% 4%, hsla(12, 100%, 72%, 1) 0px, transparent 50%)) border-box,
+        var(--gradient-base, linear-gradient(#c299ff 0 100%)) border-box;
+
+      opacity: calc((var(--edge-proximity) - var(--color-sensitivity)) / (100 - var(--color-sensitivity)));
+
+      mask-image:
+        conic-gradient(
+          from var(--cursor-angle) at center,
+          black calc(var(--cone-spread) * 1%),
+          transparent calc((var(--cone-spread) + 15) * 1%),
+          transparent calc((100 - var(--cone-spread) - 15) * 1%),
+          black calc((100 - var(--cone-spread)) * 1%)
+        );
+      -webkit-mask-image:
+        conic-gradient(
+          from var(--cursor-angle) at center,
+          black calc(var(--cone-spread) * 1%),
+          transparent calc((var(--cone-spread) + 15) * 1%),
+          transparent calc((100 - var(--cone-spread) - 15) * 1%),
+          black calc((100 - var(--cone-spread)) * 1%)
+        );
+    }
+
+    /* colored mesh-gradient background fill near edges */
+    .border-glow-card::after {
+      border: 1px solid transparent;
+      background:
+        var(--gradient-one, radial-gradient(at 80% 55%, hsla(268, 100%, 76%, 1) 0px, transparent 50%)) padding-box,
+        var(--gradient-two, radial-gradient(at 69% 34%, hsla(349, 100%, 74%, 1) 0px, transparent 50%)) padding-box,
+        var(--gradient-three, radial-gradient(at 8% 6%, hsla(136, 100%, 78%, 1) 0px, transparent 50%)) padding-box,
+        var(--gradient-four, radial-gradient(at 41% 38%, hsla(192, 100%, 64%, 1) 0px, transparent 50%)) padding-box,
+        var(--gradient-five, radial-gradient(at 86% 85%, hsla(186, 100%, 74%, 1) 0px, transparent 50%)) padding-box,
+        var(--gradient-six, radial-gradient(at 82% 18%, hsla(52, 100%, 65%, 1) 0px, transparent 50%)) padding-box,
+        var(--gradient-seven, radial-gradient(at 51% 4%, hsla(12, 100%, 72%, 1) 0px, transparent 50%)) padding-box,
+        var(--gradient-base, linear-gradient(#c299ff 0 100%)) padding-box;
+
+      mask-image:
+        linear-gradient(to bottom, black, black),
+        radial-gradient(ellipse at 50% 50%, black 40%, transparent 65%),
+        radial-gradient(ellipse at 66% 66%, black 5%, transparent 40%),
+        radial-gradient(ellipse at 33% 33%, black 5%, transparent 40%),
+        radial-gradient(ellipse at 66% 33%, black 5%, transparent 40%),
+        radial-gradient(ellipse at 33% 66%, black 5%, transparent 40%),
+        conic-gradient(from var(--cursor-angle) at center, transparent 5%, black 15%, black 85%, transparent 95%);
+      -webkit-mask-image:
+        linear-gradient(to bottom, black, black),
+        radial-gradient(ellipse at 50% 50%, black 40%, transparent 65%),
+        radial-gradient(ellipse at 66% 66%, black 5%, transparent 40%),
+        radial-gradient(ellipse at 33% 33%, black 5%, transparent 40%),
+        radial-gradient(ellipse at 66% 33%, black 5%, transparent 40%),
+        radial-gradient(ellipse at 33% 66%, black 5%, transparent 40%),
+        conic-gradient(from var(--cursor-angle) at center, transparent 5%, black 15%, black 85%, transparent 95%);
+
+      mask-composite: subtract, add, add, add, add, add;
+      -webkit-mask-composite: source-out, destination-over, destination-over, destination-over, destination-over, destination-over;
+      opacity: calc(var(--fill-opacity, 0.5) * (var(--edge-proximity) - var(--color-sensitivity)) / (100 - var(--color-sensitivity)));
+      mix-blend-mode: soft-light;
+    }
+
+    /* outer glow layer */
+    .border-glow-card > .edge-light {
+      inset: calc(var(--glow-padding) * -1);
+      pointer-events: none;
       z-index: 1;
+
+      mask-image:
+        conic-gradient(
+          from var(--cursor-angle) at center, black 2.5%, transparent 10%, transparent 90%, black 97.5%
+        );
+      -webkit-mask-image:
+        conic-gradient(
+          from var(--cursor-angle) at center, black 2.5%, transparent 10%, transparent 90%, black 97.5%
+        );
+
+      opacity: calc((var(--edge-proximity) - var(--edge-sensitivity)) / (100 - var(--edge-sensitivity)));
+      mix-blend-mode: plus-lighter;
     }
-    .hover-gradient-card:hover::after {
-      opacity: 0.75;
+
+    .border-glow-card > .edge-light::before {
+      content: "";
+      position: absolute;
+      inset: var(--glow-padding);
+      border-radius: inherit;
+      box-shadow:
+        inset 0 0 0 1px var(--glow-color, hsl(40deg 80% 80% / 100%)),
+        inset 0 0 1px 0 var(--glow-color-60, hsl(40deg 80% 80% / 60%)),
+        inset 0 0 3px 0 var(--glow-color-50, hsl(40deg 80% 80% / 50%)),
+        inset 0 0 6px 0 var(--glow-color-40, hsl(40deg 80% 80% / 40%)),
+        inset 0 0 15px 0 var(--glow-color-30, hsl(40deg 80% 80% / 30%)),
+        inset 0 0 25px 2px var(--glow-color-20, hsl(40deg 80% 80% / 20%)),
+        inset 0 0 50px 2px var(--glow-color-10, hsl(40deg 80% 80% / 10%)),
+        0 0 1px 0 var(--glow-color-60, hsl(40deg 80% 80% / 60%)),
+        0 0 3px 0 var(--glow-color-50, hsl(40deg 80% 80% / 50%)),
+        0 0 6px 0 var(--glow-color-40, hsl(40deg 80% 80% / 40%)),
+        0 0 15px 0 var(--glow-color-30, hsl(40deg 80% 80% / 30%)),
+        0 0 25px 2px var(--glow-color-20, hsl(40deg 80% 80% / 20%)),
+        0 0 50px 2px var(--glow-color-10, hsl(40deg 80% 80% / 10%));
     }
-    [data-theme="light"] .hover-gradient-card::after {
-      background: radial-gradient(
-        150px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
-        rgba(194, 65, 12, 0.4),
-        transparent
-      );
+
+    .border-glow-inner {
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      border-radius: inherit;
     }
   </style>
 </head>
@@ -2263,7 +2382,7 @@
             </div>
           </div>
           
-          <div class="bento-visual">
+          <div class="bento-visual border-glow-card">
             <!-- Noise Background Component -->
             <div class="noise-bg-container">
               <div class="noise-bg-gradient layer-1"></div>
@@ -2311,7 +2430,7 @@
             </p>
           </div>
           
-          <div class="bento-visual" style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-4); align-items:center;">
+          <div class="bento-visual border-glow-card" style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-4); align-items:center;">
             <!-- Noise Background Component -->
             <div class="noise-bg-container">
               <div class="noise-bg-gradient layer-1"></div>
@@ -2360,7 +2479,7 @@
             </p>
           </div>
           
-          <div class="bento-visual">
+          <div class="bento-visual border-glow-card">
             <!-- Noise Background Component -->
             <div class="noise-bg-container">
               <div class="noise-bg-gradient layer-1"></div>
@@ -2405,7 +2524,7 @@
             </p>
           </div>
           
-          <div class="bento-visual">
+          <div class="bento-visual border-glow-card">
             <!-- Noise Background Component -->
             <div class="noise-bg-container">
               <div class="noise-bg-gradient layer-1"></div>
@@ -2435,7 +2554,7 @@
             </p>
           </div>
           
-          <div class="bento-visual">
+          <div class="bento-visual border-glow-card">
             <!-- Noise Background Component -->
             <div class="noise-bg-container">
               <div class="noise-bg-gradient layer-1"></div>
@@ -2483,7 +2602,7 @@
             </p>
           </div>
           
-          <div class="bento-visual" id="snap-terminal-wrapper">
+          <div class="bento-visual border-glow-card" id="snap-terminal-wrapper">
             <!-- Noise Background Component -->
             <div class="noise-bg-container">
               <div class="noise-bg-gradient layer-1"></div>
@@ -2508,17 +2627,17 @@
     <div class="infra-section">
       <h4 class="infra-heading">Core Infrastructure Services</h4>
       <div class="infra-grid">
-        <div class="infra-card hover-gradient-card">
+        <div class="infra-card border-glow-card">
           <span class="infra-tag">Gateway</span>
           <h4 class="infra-title">core-api</h4>
           <p class="infra-desc">FastAPI-powered central routing layer. Handles asynchronous validation, telemetry extraction, and coordinates microservice pipelines with &lt;5ms overhead.</p>
         </div>
-        <div class="infra-card hover-gradient-card">
+        <div class="infra-card border-glow-card">
           <span class="infra-tag">Observability</span>
           <h4 class="infra-title">Odysseus Dashboard</h4>
           <p class="infra-desc">Central dashboard for microservice health, budget forecasting, and configuration. Live-tweak chaos injection rates and view audit logs in real time.</p>
         </div>
-        <div class="infra-card hover-gradient-card">
+        <div class="infra-card border-glow-card">
           <span class="infra-tag">Resilience</span>
           <h4 class="infra-title">SwarmChaos</h4>
           <p class="infra-desc">Chaos testing orchestration. Inject latency, simulated timeouts, API errors, and synthetic model hallucinations to test the self-healing ability of your agent clusters.</p>
@@ -2538,22 +2657,22 @@
     </div>
 
     <div class="steps">
-      <div class="step hover-gradient-card">
+      <div class="step border-glow-card">
         <span class="step-num">01</span>
         <h3>Clone &amp; configure</h3>
         <p>Clone the git repository and copy variables into your local <code>.env</code> file.</p>
       </div>
-      <div class="step hover-gradient-card">
+      <div class="step border-glow-card">
         <span class="step-num">02</span>
         <h3>Launch gateway</h3>
         <p>Run compose up to launch all nine gateway services in isolated Docker containers.</p>
       </div>
-      <div class="step hover-gradient-card">
+      <div class="step border-glow-card">
         <span class="step-num">03</span>
         <h3>Redirect API base</h3>
         <p>Change your LLM API endpoint to <code>localhost:4000</code>. Intercept begins immediately.</p>
       </div>
-      <div class="step hover-gradient-card">
+      <div class="step border-glow-card">
         <span class="step-num">04</span>
         <h3>Verify logs</h3>
         <p>Open local dashboard at <code>localhost:3000</code> to monitor alerts and budget usage.</p>
@@ -2876,6 +2995,10 @@
         ? '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
         : '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
     }
+
+    if (window.updateAllBorderGlowThemes) {
+      window.updateAllBorderGlowThemes();
+    }
   };
 
   setLocaleTheme(currentTheme);
@@ -3175,17 +3298,138 @@
     }, 150);
   }
 
-  // ── HOVER GRADIENT CARD TRACKING ──────────────────────────
-  const gradientCards = document.querySelectorAll('.hover-gradient-card');
-  gradientCards.forEach(card => {
-    card.addEventListener('mousemove', (e) => {
-      const rect = card.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      card.style.setProperty('--mouse-x', `${x}px`);
-      card.style.setProperty('--mouse-y', `${y}px`);
+  // ── BORDER GLOW COMPONENTS INITIALIZATION (React Bits) ────
+  window.updateAllBorderGlowThemes = () => {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const glowColor = isLight ? '340 80 70' : '270 80 80';
+    const cards = document.querySelectorAll('.border-glow-card');
+    cards.forEach(card => {
+      const parseHSL = (hslStr) => {
+        const match = hslStr.match(/([\d.]+)\s*([\d.]+)%?\s*([\d.]+)%?/);
+        if (!match) return { h: 270, s: 80, l: 80 };
+        return { h: parseFloat(match[1]), s: parseFloat(match[2]), l: parseFloat(match[3]) };
+      };
+      const { h, s, l } = parseHSL(glowColor);
+      const base = `${h}deg ${s}% ${l}%`;
+      const opacities = [100, 60, 50, 40, 30, 20, 10];
+      const keys = ['', '-60', '-50', '-40', '-30', '-20', '-10'];
+      const glowIntensity = parseFloat(card.getAttribute('data-glow-intensity')) || 1.0;
+      opacities.forEach((op, i) => {
+        card.style.setProperty(`--glow-color${keys[i]}`, `hsl(${base} / ${Math.min(op * glowIntensity, 100)}%)`);
+      });
     });
-  });
+  };
+
+  function initBorderGlowComponents() {
+    const cards = document.querySelectorAll('.border-glow-card');
+    cards.forEach(card => {
+      if (card.querySelector('.border-glow-inner')) return;
+      
+      const edgeSensitivity = card.getAttribute('data-edge-sensitivity') || 30;
+      const glowIntensity = card.getAttribute('data-glow-intensity') || 1.0;
+      const coneSpread = card.getAttribute('data-cone-spread') || 25;
+      const fillOpacity = card.getAttribute('data-fill-opacity') || 0.35;
+      
+      const style = window.getComputedStyle(card);
+      const backgroundColor = style.backgroundColor || '#120F17';
+      const borderRadius = parseInt(style.borderRadius) || 28;
+      
+      // Setup dynamic variables
+      card.style.setProperty('--card-bg', backgroundColor);
+      card.style.setProperty('--edge-sensitivity', edgeSensitivity);
+      card.style.setProperty('--border-radius', `${borderRadius}px`);
+      card.style.setProperty('--glow-padding', '40px');
+      card.style.setProperty('--cone-spread', coneSpread);
+      card.style.setProperty('--fill-opacity', fillOpacity);
+      
+      // Mesh gradient colors
+      const colors = ['#c084fc', '#f472b6', '#38bdf8'];
+      const positions = ['80% 55%', '69% 34%', '8% 6%', '41% 38%', '86% 85%', '82% 18%', '51% 4%'];
+      const gradientKeys = ['--gradient-one', '--gradient-two', '--gradient-three', '--gradient-four', '--gradient-five', '--gradient-six', '--gradient-seven'];
+      const colorMap = [0, 1, 2, 0, 1, 2, 1];
+      for (let i = 0; i < 7; i++) {
+        const c = colors[colorMap[i]];
+        card.style.setProperty(gradientKeys[i], `radial-gradient(at ${positions[i]}, ${c} 0px, transparent 50%)`);
+      }
+      card.style.setProperty('--gradient-base', `linear-gradient(${colors[0]} 0 100%)`);
+      
+      // Structure wrapping
+      const edgeLight = document.createElement('span');
+      edgeLight.className = 'edge-light';
+      
+      const inner = document.createElement('div');
+      inner.className = 'border-glow-inner';
+      
+      // Move layout styling from parent to inner
+      const padding = style.padding;
+      inner.style.padding = padding;
+      
+      // Copy layout flex/grid rules to child to maintain alignment
+      inner.style.display = style.display;
+      inner.style.flexDirection = style.flexDirection;
+      inner.style.justifyContent = style.justifyContent;
+      inner.style.alignItems = style.alignItems;
+      inner.style.gap = style.gap;
+      
+      // Move all children to inner wrapper
+      while (card.firstChild) {
+        inner.appendChild(card.firstChild);
+      }
+      
+      card.appendChild(edgeLight);
+      card.appendChild(inner);
+      
+      // Override parent padding to 0 so borders align perfectly
+      card.style.setProperty('padding', '0', 'important');
+      
+      // Cursor tracking functions
+      const getCenterOfElement = (el) => {
+        const { width, height } = el.getBoundingClientRect();
+        return [width / 2, height / 2];
+      };
+      
+      const getEdgeProximity = (el, x, y) => {
+        const [cx, cy] = getCenterOfElement(el);
+        const dx = x - cx;
+        const dy = y - cy;
+        let kx = Infinity;
+        let ky = Infinity;
+        if (dx !== 0) kx = cx / Math.abs(dx);
+        if (dy !== 0) ky = cy / Math.abs(dy);
+        return Math.min(Math.max(1 / Math.min(kx, ky), 0), 1);
+      };
+      
+      const getCursorAngle = (el, x, y) => {
+        const [cx, cy] = getCenterOfElement(el);
+        const dx = x - cx;
+        const dy = y - cy;
+        if (dx === 0 && dy === 0) return 0;
+        const radians = Math.atan2(dy, dx);
+        let degrees = radians * (180 / Math.PI) + 90;
+        if (degrees < 0) degrees += 360;
+        return degrees;
+      };
+      
+      card.addEventListener('pointermove', (e) => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        const edge = getEdgeProximity(card, x, y);
+        const angle = getCursorAngle(card, x, y);
+        
+        card.style.setProperty('--edge-proximity', `${(edge * 100).toFixed(3)}`);
+        card.style.setProperty('--cursor-angle', `${angle.toFixed(3)}deg`);
+      });
+    });
+    
+    // Set active glow theme properties
+    if (window.updateAllBorderGlowThemes) {
+      window.updateAllBorderGlowThemes();
+    }
+  }
+  
+  initBorderGlowComponents();
 
   // ── SPARKLES CORE BACKGROUND ──────────────────────────────
   const sparklesCanvas = document.createElement('canvas');
