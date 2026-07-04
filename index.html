@@ -1701,25 +1701,29 @@
     /* ── SHADCN & ACETERNITY PREMIUM COMPONENTS STYLING ── */
     
     /* 1. Faulty Terminal Background — raw WebGL canvas */
-    /* The canvas itself fills the hero via CSS, JS only sets pixel buffer size */
+    /* Lives inside .hero-band which is full-width; canvas fills it via CSS */
+    .hero-band {
+      position: relative;
+      overflow: hidden;
+      width: 100%;
+    }
     .hero-bg-canvas {
       position: absolute;
       inset: 0;
-      /* DO NOT set width/height here — the canvas attributes handle pixel density
-         and CSS handles visual fill via 100% on the wrapper */
       width: 100%;
       height: 100%;
       display: block;
       pointer-events: none;
       z-index: 0;
     }
+    /* .hero stays as the max-width content grid */
     .hero {
-      position: relative; /* context for faulty terminal canvas */
-      overflow: hidden;
+      position: relative;
+      z-index: 1; /* above canvas, still inside band */
     }
     .hero-content {
       position: relative;
-      z-index: 2; /* lift content above canvas */
+      z-index: 2;
     }
     .hero-terminal {
       position: relative;
@@ -2215,6 +2219,7 @@
 <main id="main">
 
 <!-- HERO -->
+<div class="hero-band" id="hero-band">
 <header class="hero">
   <div class="hero-content">
     <div class="hero-meta-badge">
@@ -2264,6 +2269,8 @@
     </div>
   </div>
 </header>
+</div><!-- /.hero-band -->
+
 
 <!-- PROBLEM / THREAT FEED -->
 <section class="problem" id="problems" aria-labelledby="problem-title">
@@ -3364,13 +3371,14 @@
 
   // ── FAULTY TERMINAL BACKGROUND — raw WebGL (no OGL dep) ────
   (function initFaultyTerminal() {
-    const heroSection = document.querySelector('.hero');
-    if (!heroSection) return;
+    // Target the FULL-WIDTH band, not the max-width .hero grid
+    const heroBand = document.querySelector('.hero-band');
+    if (!heroBand) return;
 
     // ── Canvas ──────────────────────────────────────────────
     const canvas = document.createElement('canvas');
     canvas.className = 'hero-bg-canvas';
-    heroSection.insertBefore(canvas, heroSection.firstChild);
+    heroBand.insertBefore(canvas, heroBand.firstChild);
 
     // ── WebGL Context ───────────────────────────────────────
     const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
@@ -3578,8 +3586,10 @@
 
     function applyThemeColors() {
       const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-      const tint = hexToRgb(isLight ? '#7c3aed' : '#A855F7');
-      const bg   = hexToRgb(isLight ? '#f8f6f0' : '#060810');
+      // Dark: lavender purple (#a78bfa) matching --color-primary dark
+      // Light: rose red (#f43f5e) matching --color-primary light
+      const tint = hexToRgb(isLight ? '#f43f5e' : '#a78bfa');
+      const bg   = hexToRgb(isLight ? '#fbf9f1' : '#080a0b');
       gl.useProgram(prog);
       gl.uniform3fv(U.uTint,       tint);
       gl.uniform3fv(U.uBackground, bg);
@@ -3591,22 +3601,22 @@
     // ── Resize: set pixel buffer without touching CSS size ───
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     function resize() {
-      // canvas.clientWidth/Height comes from CSS (100% of hero)
-      const w = canvas.clientWidth  || heroSection.offsetWidth;
-      const h = canvas.clientHeight || heroSection.offsetHeight;
+      // canvas fills heroBand via CSS; read its rendered size
+      const w = canvas.clientWidth  || heroBand.offsetWidth;
+      const h = canvas.clientHeight || heroBand.offsetHeight;
       canvas.width  = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       gl.viewport(0, 0, canvas.width, canvas.height);
     }
     const ro = new ResizeObserver(resize);
-    ro.observe(heroSection);
+    ro.observe(heroBand);
     resize();
 
     // ── Mouse tracking ───────────────────────────────────────
     const mouse = { x: 0.5, y: 0.5 };
     const smooth = { x: 0.5, y: 0.5 };
-    heroSection.addEventListener('mousemove', (e) => {
-      const r = heroSection.getBoundingClientRect();
+    heroBand.addEventListener('mousemove', (e) => {
+      const r = heroBand.getBoundingClientRect();
       mouse.x = (e.clientX - r.left) / r.width;
       mouse.y = 1.0 - (e.clientY - r.top)  / r.height;
     });
