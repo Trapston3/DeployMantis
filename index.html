@@ -1703,12 +1703,14 @@
     /* 1. Faulty Terminal Background */
     #hero-faulty-terminal {
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: 0;
+      width: 100% !important;
+      height: 100% !important;
       pointer-events: none;
       z-index: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
+      grid-column: 1 / -1;
+      grid-row: 1 / -1;
     }
     .hero {
       position: relative; /* context for faulty terminal canvas */
@@ -3387,7 +3389,13 @@
       
       // Setup renderer
       const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const renderer = new Renderer({ canvas, dpr, alpha: false });
+      const renderer = new Renderer({ 
+        canvas, 
+        dpr, 
+        alpha: false, 
+        width: heroSection.offsetWidth, 
+        height: heroSection.offsetHeight 
+      });
       const gl = renderer.gl;
       gl.clearColor(0, 0, 0, 1);
       
