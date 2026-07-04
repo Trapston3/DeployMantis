@@ -1700,24 +1700,26 @@
 
     /* ── SHADCN & ACETERNITY PREMIUM COMPONENTS STYLING ── */
     
-    /* 1. Faulty Terminal Background */
-    #hero-faulty-terminal {
+    /* 1. Faulty Terminal Background — raw WebGL canvas */
+    /* The canvas itself fills the hero via CSS, JS only sets pixel buffer size */
+    .hero-bg-canvas {
       position: absolute;
-      top: 0;
-      left: 0;
-      width: 100% !important;
-      height: 100% !important;
+      inset: 0;
+      /* DO NOT set width/height here — the canvas attributes handle pixel density
+         and CSS handles visual fill via 100% on the wrapper */
+      width: 100%;
+      height: 100%;
+      display: block;
       pointer-events: none;
       z-index: 0;
-      grid-column: 1 / -1;
-      grid-row: 1 / -1;
     }
     .hero {
       position: relative; /* context for faulty terminal canvas */
+      overflow: hidden;
     }
     .hero-content {
       position: relative;
-      z-index: 2; /* lift content above sparkles */
+      z-index: 2; /* lift content above canvas */
     }
     .hero-terminal {
       position: relative;
@@ -3360,367 +3362,275 @@
   
   initBorderGlowComponents();
 
-  // ── FAULTY TERMINAL BACKGROUND (React Bits Component) ────
-  try {
+  // ── FAULTY TERMINAL BACKGROUND — raw WebGL (no OGL dep) ────
+  (function initFaultyTerminal() {
     const heroSection = document.querySelector('.hero');
-    if (heroSection && (window.ogl || window.OGL)) {
-      const { Renderer, Program, Mesh, Color, Triangle } = (window.ogl || window.OGL);
-      
-      const canvas = document.createElement('canvas');
-      canvas.id = 'hero-faulty-terminal';
-      heroSection.insertBefore(canvas, heroSection.firstChild);
-      
-      // Configurations matching usage example:
-      const scale = 3;
-      const gridMul = [2, 1];
-      const digitSize = 3;
-      const timeScale = 1;
-      const scanlineIntensity = 0.2;
-      const glitchAmount = 1;
-      const flickerAmount = 1;
-      const noiseAmp = 1;
-      const chromaticAberration = 0;
-      const dither = 0;
-      const curvature = 0.12;
-      const brightness = 0.7;
-      const mouseReact = true;
-      const mouseStrength = 0.5;
-      const pageLoadAnimation = false;
-      
-      // Setup renderer
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const renderer = new Renderer({ 
-        canvas, 
-        dpr, 
-        alpha: false, 
-        width: heroSection.offsetWidth, 
-        height: heroSection.offsetHeight 
-      });
-      const gl = renderer.gl;
-      gl.clearColor(0, 0, 0, 1);
-      
-      const geometry = new Triangle(gl);
-      
-      const vertexShader = `
-        attribute vec2 position;
-        attribute vec2 uv;
-        varying vec2 vUv;
-        void main() {
-          vUv = uv;
-          gl_Position = vec4(position, 0.0, 1.0);
-        }
-      `;
+    if (!heroSection) return;
 
-      const fragmentShader = `
-        precision mediump float;
+    // ── Canvas ──────────────────────────────────────────────
+    const canvas = document.createElement('canvas');
+    canvas.className = 'hero-bg-canvas';
+    heroSection.insertBefore(canvas, heroSection.firstChild);
 
-        varying vec2 vUv;
+    // ── WebGL Context ───────────────────────────────────────
+    const gl = canvas.getContext('webgl2') || canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) { canvas.remove(); return; }
 
-        uniform float iTime;
-        uniform vec3  iResolution;
-        uniform float uScale;
-
-        uniform vec2  uGridMul;
-        uniform float uDigitSize;
-        uniform float uScanlineIntensity;
-        uniform float uGlitchAmount;
-        uniform float uFlickerAmount;
-        uniform float uNoiseAmp;
-        uniform float uChromaticAberration;
-        uniform float uDither;
-        uniform float uCurvature;
-        uniform vec3  uTint;
-        uniform vec3  uBackground;
-        uniform float uIsLight;
-        uniform vec2  uMouse;
-        uniform float uMouseStrength;
-        uniform float uUseMouse;
-        uniform float uPageLoadProgress;
-        uniform float uUsePageLoadAnimation;
-        uniform float uBrightness;
-
-        float time;
-
-        float hash21(vec2 p){
-          p = fract(p * 234.56);
-          p += dot(p, p + 34.56);
-          return fract(p.x * p.y);
-        }
-
-        float noise(vec2 p)
-        {
-          return sin(p.x * 10.0) * sin(p.y * (3.0 + sin(time * 0.090909))) + 0.2; 
-        }
-
-        mat2 rotate(float angle)
-        {
-          float c = cos(angle);
-          float s = sin(angle);
-          return mat2(c, -s, s, c);
-        }
-
-        float fbm(vec2 p)
-        {
-          p *= 1.1;
-          float f = 0.0;
-          float amp = 0.5 * uNoiseAmp;
-          
-          mat2 modify0 = rotate(time * 0.02);
-          f += amp * noise(p);
-          p = modify0 * p * 2.0;
-          amp *= 0.454545;
-          
-          mat2 modify1 = rotate(time * 0.02);
-          f += amp * noise(p);
-          p = modify1 * p * 2.0;
-          amp *= 0.454545;
-          
-          mat2 modify2 = rotate(time * 0.08);
-          f += amp * noise(p);
-          
-          return f;
-        }
-
-        float pattern(vec2 p, out vec2 q, out vec2 r) {
-          vec2 offset1 = vec2(1.0);
-          vec2 offset0 = vec2(0.0);
-          mat2 rot01 = rotate(0.1 * time);
-          mat2 rot1 = rotate(0.1);
-          
-          q = vec2(fbm(p + offset1), fbm(rot01 * p + offset1));
-          r = vec2(fbm(rot1 * q + offset0), fbm(q + offset0));
-          return fbm(p + r);
-        }
-
-        float digit(vec2 p){
-            vec2 grid = uGridMul * 15.0;
-            vec2 s = floor(p * grid) / grid;
-            p = p * grid;
-            vec2 q, r;
-            float intensity = pattern(s * 0.1, q, r) * 1.3 - 0.03;
-            
-            if(uUseMouse > 0.5){
-                vec2 mouseWorld = uMouse * uScale;
-                float distToMouse = distance(s, mouseWorld);
-                float mouseInfluence = exp(-distToMouse * 8.0) * uMouseStrength * 10.0;
-                intensity += mouseInfluence;
-                
-                float ripple = sin(distToMouse * 20.0 - iTime * 5.0) * 0.1 * mouseInfluence;
-                intensity += ripple;
-            }
-            
-            if(uUsePageLoadAnimation > 0.5){
-                float cellRandom = fract(sin(dot(s, vec2(12.9898, 78.233))) * 43758.5453);
-                float cellDelay = cellRandom * 0.8;
-                float cellProgress = clamp((uPageLoadProgress - cellDelay) / 0.2, 0.0, 1.0);
-                
-                float fadeAlpha = smoothstep(0.0, 1.0, cellProgress);
-                intensity *= fadeAlpha;
-            }
-            
-            p = fract(p);
-            p *= uDigitSize;
-            
-            float px5 = p.x * 5.0;
-            float py5 = (1.0 - p.y) * 5.0;
-            float x = fract(px5);
-            float y = fract(py5);
-            
-            float i = floor(py5) - 2.0;
-            float j = floor(px5) - 2.0;
-            float n = i * i + j * j;
-            float f = n * 0.0625;
-            
-            float isOn = step(0.1, intensity - f);
-            float brightness = isOn * (0.2 + y * 0.8) * (0.75 + x * 0.25);
-            
-            return step(0.0, p.x) * step(p.x, 1.0) * step(0.0, p.y) * step(p.y, 1.0) * brightness;
-        }
-
-        float onOff(float a, float b, float c)
-        {
-          return step(c, sin(iTime + a * cos(iTime * b))) * uFlickerAmount;
-        }
-
-        float displace(vec2 look)
-        {
-            float y = look.y - mod(iTime * 0.25, 1.0);
-            float window = 1.0 / (1.0 + 50.0 * y * y);
-            return sin(look.y * 20.0 + iTime) * 0.0125 * onOff(4.0, 2.0, 0.8) * (1.0 + cos(iTime * 60.0)) * window;
-        }
-
-        vec3 getColor(vec2 p){
-            
-            float bar = step(mod(p.y + time * 20.0, 1.0), 0.2) * 0.4 + 1.0;
-            bar *= uScanlineIntensity;
-            
-            float displacement = displace(p);
-            p.x += displacement;
-
-            if (uGlitchAmount != 1.0) {
-              float extra = displacement * (uGlitchAmount - 1.0);
-              p.x += extra;
-            }
-
-            float middle = digit(p);
-            
-            const float off = 0.002;
-            float sum = digit(p + vec2(-off, -off)) + digit(p + vec2(0.0, -off)) + digit(p + vec2(off, -off)) +
-                        digit(p + vec2(-off, 0.0)) + digit(p + vec2(0.0, 0.0)) + digit(p + vec2(off, 0.0)) +
-                        digit(p + vec2(-off, off)) + digit(p + vec2(0.0, off)) + digit(p + vec2(off, off));
-            
-            vec3 baseColor = vec3(0.9) * middle + sum * 0.1 * vec3(1.0) * bar;
-            return baseColor;
-        }
-
-        vec2 barrel(vec2 uv){
-          vec2 c = uv * 2.0 - 1.0;
-          float r2 = dot(c, c);
-          c *= 1.0 + uCurvature * r2;
-          return c * 0.5 + 0.5;
-        }
-
-        void main() {
-            time = iTime * 0.333333;
-            vec2 uv = vUv;
-
-            if(uCurvature != 0.0){
-              uv = barrel(uv);
-            }
-            
-            vec2 p = uv * uScale;
-            vec3 col = getColor(p);
-
-            if(uChromaticAberration != 0.0){
-              vec2 ca = vec2(uChromaticAberration) / iResolution.xy;
-              col.r = getColor(p + ca).r;
-              col.b = getColor(p - ca).b;
-            }
-
-            vec3 finalCol;
-            if (uIsLight > 0.5) {
-              finalCol = mix(uBackground, uTint, clamp(col.r, 0.0, 1.0));
-            } else {
-              finalCol = mix(uBackground, uTint * col.r, clamp(col.r, 0.0, 1.0));
-            }
-
-            finalCol *= uBrightness;
-
-            if(uDither > 0.0){
-              float rnd = hash21(gl_FragCoord.xy);
-              finalCol += (rnd - 0.5) * (uDither * 0.003922);
-            }
-
-            gl_FragColor = vec4(finalCol, 1.0);
-        }
-      `;
-      
-      // Setup Uniforms
-      const uniforms = {
-        iTime: { value: 0 },
-        iResolution: { value: new Color(canvas.width, canvas.height, canvas.width / canvas.height) },
-        uScale: { value: scale },
-        uGridMul: { value: new Float32Array(gridMul) },
-        uDigitSize: { value: digitSize },
-        uScanlineIntensity: { value: scanlineIntensity },
-        uGlitchAmount: { value: glitchAmount },
-        uFlickerAmount: { value: flickerAmount },
-        uNoiseAmp: { value: noiseAmp },
-        uChromaticAberration: { value: chromaticAberration },
-        uDither: { value: dither },
-        uCurvature: { value: curvature },
-        uTint: { value: new Color(1, 1, 1) },
-        uBackground: { value: new Color(0, 0, 0) },
-        uIsLight: { value: 0.0 },
-        uMouse: { value: new Float32Array([0.5, 0.5]) },
-        uMouseStrength: { value: mouseStrength },
-        uUseMouse: { value: mouseReact ? 1 : 0 },
-        uPageLoadProgress: { value: pageLoadAnimation ? 0 : 1 },
-        uUsePageLoadAnimation: { value: pageLoadAnimation ? 1 : 0 },
-        uBrightness: { value: brightness }
-      };
-      
-      // Helper to convert hex to rgb array [r, g, b]
-      function hexToRgb(hex) {
-        let h = hex.replace('#', '').trim();
-        if (h.length === 3) {
-          h = h.split('').map(c => c + c).join('');
-        }
-        const num = parseInt(h, 16);
-        return [((num >> 16) & 255) / 255, ((num >> 8) & 255) / 255, (num & 255) / 255];
+    // ── Shaders ─────────────────────────────────────────────
+    const VS_SRC = `
+      attribute vec2 aPos;
+      varying vec2 vUv;
+      void main() {
+        vUv = aPos * 0.5 + 0.5;
+        gl_Position = vec4(aPos, 0.0, 1.0);
       }
-      
-      // Function to update colors based on the theme
-      window.updateFaultyTerminalColors = () => {
-        const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-        uniforms.uIsLight.value = isLight ? 1.0 : 0.0;
-        
-        const tintHex = isLight ? '#7c3aed' : '#A855F7'; // Light theme: violet, Dark theme: purple
-        const bgHex = isLight ? '#fbf9f1' : '#080a0b';
-        
-        const tRGB = hexToRgb(tintHex);
-        const bRGB = hexToRgb(bgHex);
-        
-        uniforms.uTint.value.set(tRGB[0], tRGB[1], tRGB[2]);
-        uniforms.uBackground.value.set(bRGB[0], bRGB[1], bRGB[2]);
-      };
-      
-      window.updateFaultyTerminalColors();
-      
-      const program = new Program(gl, {
-        vertex: vertexShader,
-        fragment: fragmentShader,
-        uniforms
-      });
-      
-      const mesh = new Mesh(gl, { geometry, program });
-      
-      const resize = () => {
-        renderer.setSize(heroSection.offsetWidth, heroSection.offsetHeight);
-        uniforms.iResolution.value.set(gl.canvas.width, gl.canvas.height, gl.canvas.width / gl.canvas.height);
-      };
-      
-      window.addEventListener('resize', resize);
-      resize();
-      
-      // Mouse tracking on the hero section
-      const mouse = { x: 0.5, y: 0.5 };
-      const smoothMouse = { x: 0.5, y: 0.5 };
-      
-      if (mouseReact) {
-        heroSection.addEventListener('mousemove', (e) => {
-          const rect = heroSection.getBoundingClientRect();
-          mouse.x = (e.clientX - rect.left) / rect.width;
-          mouse.y = 1 - (e.clientY - rect.top) / rect.height;
-        });
+    `;
+
+    const FS_SRC = `
+      precision mediump float;
+      varying vec2 vUv;
+
+      uniform float iTime;
+      uniform float uScale;
+      uniform vec2  uGridMul;
+      uniform float uDigitSize;
+      uniform float uScanlineIntensity;
+      uniform float uGlitchAmount;
+      uniform float uFlickerAmount;
+      uniform float uNoiseAmp;
+      uniform float uCurvature;
+      uniform vec3  uTint;
+      uniform vec3  uBackground;
+      uniform vec2  uMouse;
+      uniform float uMouseStrength;
+      uniform float uUseMouse;
+      uniform float uBrightness;
+
+      float time;
+
+      float hash21(vec2 p){
+        p = fract(p * 234.56);
+        p += dot(p, p + 34.56);
+        return fract(p.x * p.y);
       }
-      
-      let rafId = 0;
-      const timeOffset = Math.random() * 100;
-      
-      const update = (t) => {
-        rafId = requestAnimationFrame(update);
-        
-        // Update iTime
-        const elapsed = (t * 0.001 + timeOffset) * timeScale;
-        uniforms.iTime.value = elapsed;
-        
-        if (mouseReact) {
-          const dampingFactor = 0.08;
-          smoothMouse.x += (mouse.x - smoothMouse.x) * dampingFactor;
-          smoothMouse.y += (mouse.y - smoothMouse.y) * dampingFactor;
-          
-          uniforms.uMouse.value[0] = smoothMouse.x;
-          uniforms.uMouse.value[1] = smoothMouse.y;
+
+      float noise(vec2 p) {
+        return sin(p.x * 10.0) * sin(p.y * (3.0 + sin(time * 0.090909))) + 0.2;
+      }
+
+      mat2 rotate(float a) {
+        float c = cos(a); float s = sin(a);
+        return mat2(c, -s, s, c);
+      }
+
+      float fbm(vec2 p) {
+        p *= 1.1;
+        float f = 0.0;
+        float amp = 0.5 * uNoiseAmp;
+        f += amp * noise(p); p = rotate(time*0.02) * p * 2.0; amp *= 0.454545;
+        f += amp * noise(p); p = rotate(time*0.02) * p * 2.0; amp *= 0.454545;
+        f += amp * noise(p);
+        return f;
+      }
+
+      float pattern(vec2 p, out vec2 q, out vec2 r) {
+        q = vec2(fbm(p + 1.0), fbm(rotate(0.1*time)*p + 1.0));
+        r = vec2(fbm(rotate(0.1)*q), fbm(q));
+        return fbm(p + r);
+      }
+
+      float digit(vec2 p) {
+        vec2 grid = uGridMul * 15.0;
+        vec2 s = floor(p * grid) / grid;
+        p = p * grid;
+        vec2 q, r;
+        float intensity = pattern(s * 0.1, q, r) * 1.3 - 0.03;
+
+        if (uUseMouse > 0.5) {
+          vec2 mw = uMouse * uScale;
+          float d = distance(s, mw);
+          float mi = exp(-d * 8.0) * uMouseStrength * 10.0;
+          intensity += mi;
+          intensity += sin(d * 20.0 - iTime * 5.0) * 0.1 * mi;
         }
-        
-        renderer.render({ scene: mesh });
-      };
-      rafId = requestAnimationFrame(update);
+
+        p = fract(p) * uDigitSize;
+        float px5 = p.x * 5.0, py5 = (1.0 - p.y) * 5.0;
+        float x = fract(px5), y = fract(py5);
+        float i = floor(py5) - 2.0, j = floor(px5) - 2.0;
+        float f = (i*i + j*j) * 0.0625;
+        float isOn = step(0.1, intensity - f);
+        float bright = isOn * (0.2 + y*0.8) * (0.75 + x*0.25);
+        return step(0.0,p.x)*step(p.x,1.0)*step(0.0,p.y)*step(p.y,1.0)*bright;
+      }
+
+      float onOff(float a, float b, float c) {
+        return step(c, sin(iTime + a*cos(iTime*b))) * uFlickerAmount;
+      }
+
+      float displace(vec2 look) {
+        float y = look.y - mod(iTime * 0.25, 1.0);
+        float window = 1.0 / (1.0 + 50.0*y*y);
+        return sin(look.y*20.0 + iTime)*0.0125*onOff(4.0,2.0,0.8)*(1.0+cos(iTime*60.0))*window;
+      }
+
+      float getGlyph(vec2 p) {
+        float bar = (step(mod(p.y + time*20.0,1.0), 0.2)*0.4 + 1.0) * uScanlineIntensity;
+        float disp = displace(p);
+        p.x += disp;
+        if (uGlitchAmount != 1.0) p.x += disp*(uGlitchAmount - 1.0);
+        const float off = 0.002;
+        float sum =
+          digit(p+vec2(-off,-off))+digit(p+vec2(0.,-off))+digit(p+vec2(off,-off))+
+          digit(p+vec2(-off,0.))+digit(p)+digit(p+vec2(off,0.))+
+          digit(p+vec2(-off,off))+digit(p+vec2(0.,off))+digit(p+vec2(off,off));
+        return digit(p)*0.9*bar + sum*0.1*bar;
+      }
+
+      vec2 barrel(vec2 uv) {
+        vec2 c = uv*2.0-1.0;
+        c *= 1.0 + uCurvature*dot(c,c);
+        return c*0.5+0.5;
+      }
+
+      void main() {
+        time = iTime * 0.333333;
+        vec2 uv = (uCurvature != 0.0) ? barrel(vUv) : vUv;
+        vec2 p = uv * uScale;
+        float g = getGlyph(p);
+        vec3 col = mix(uBackground, uTint * max(g, 0.0), clamp(g*2.0, 0.0, 1.0));
+        col *= uBrightness;
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `;
+
+    function compileShader(type, src) {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        console.error('FaultyTerminal shader error:', gl.getShaderInfoLog(s));
+        gl.deleteShader(s); return null;
+      }
+      return s;
     }
-  } catch (err) {
-    console.warn("FaultyTerminal background failed to initialize (WebGL might be unsupported):", err);
-  }
+
+    const vs = compileShader(gl.VERTEX_SHADER, VS_SRC);
+    const fs = compileShader(gl.FRAGMENT_SHADER, FS_SRC);
+    if (!vs || !fs) { canvas.remove(); return; }
+
+    const prog = gl.createProgram();
+    gl.attachShader(prog, vs); gl.attachShader(prog, fs);
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      console.error('FaultyTerminal link error:', gl.getProgramInfoLog(prog));
+      canvas.remove(); return;
+    }
+    gl.useProgram(prog);
+
+    // ── Full-screen triangle (no index buffer needed) ────────
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+    const posLoc = gl.getAttribLocation(prog, 'aPos');
+    gl.enableVertexAttribArray(posLoc);
+    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+    // ── Uniform locations ────────────────────────────────────
+    const uloc = (n) => gl.getUniformLocation(prog, n);
+    const U = {
+      iTime:              uloc('iTime'),
+      uScale:             uloc('uScale'),
+      uGridMul:           uloc('uGridMul'),
+      uDigitSize:         uloc('uDigitSize'),
+      uScanlineIntensity: uloc('uScanlineIntensity'),
+      uGlitchAmount:      uloc('uGlitchAmount'),
+      uFlickerAmount:     uloc('uFlickerAmount'),
+      uNoiseAmp:          uloc('uNoiseAmp'),
+      uCurvature:         uloc('uCurvature'),
+      uTint:              uloc('uTint'),
+      uBackground:        uloc('uBackground'),
+      uMouse:             uloc('uMouse'),
+      uMouseStrength:     uloc('uMouseStrength'),
+      uUseMouse:          uloc('uUseMouse'),
+      uBrightness:        uloc('uBrightness'),
+    };
+
+    // ── Props (matching usage example) ───────────────────────
+    gl.uniform1f(U.uScale,             3.0);
+    gl.uniform2fv(U.uGridMul,          [2.0, 1.0]);
+    gl.uniform1f(U.uDigitSize,         3.0);
+    gl.uniform1f(U.uScanlineIntensity, 0.2);
+    gl.uniform1f(U.uGlitchAmount,      1.0);
+    gl.uniform1f(U.uFlickerAmount,     1.0);
+    gl.uniform1f(U.uNoiseAmp,          1.0);
+    gl.uniform1f(U.uCurvature,         0.12);
+    gl.uniform1f(U.uMouseStrength,     0.5);
+    gl.uniform1f(U.uUseMouse,          1.0);
+    gl.uniform1f(U.uBrightness,        0.85);
+    gl.uniform2fv(U.uMouse,            [0.5, 0.5]);
+
+    // ── Color helper ─────────────────────────────────────────
+    function hexToRgb(hex) {
+      const n = parseInt(hex.replace('#',''), 16);
+      return [((n>>16)&255)/255, ((n>>8)&255)/255, (n&255)/255];
+    }
+
+    function applyThemeColors() {
+      const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+      const tint = hexToRgb(isLight ? '#7c3aed' : '#A855F7');
+      const bg   = hexToRgb(isLight ? '#f8f6f0' : '#060810');
+      gl.useProgram(prog);
+      gl.uniform3fv(U.uTint,       tint);
+      gl.uniform3fv(U.uBackground, bg);
+    }
+    applyThemeColors();
+    // Expose so theme toggle can call it
+    window.updateFaultyTerminalColors = applyThemeColors;
+
+    // ── Resize: set pixel buffer without touching CSS size ───
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    function resize() {
+      // canvas.clientWidth/Height comes from CSS (100% of hero)
+      const w = canvas.clientWidth  || heroSection.offsetWidth;
+      const h = canvas.clientHeight || heroSection.offsetHeight;
+      canvas.width  = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
+      gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+    const ro = new ResizeObserver(resize);
+    ro.observe(heroSection);
+    resize();
+
+    // ── Mouse tracking ───────────────────────────────────────
+    const mouse = { x: 0.5, y: 0.5 };
+    const smooth = { x: 0.5, y: 0.5 };
+    heroSection.addEventListener('mousemove', (e) => {
+      const r = heroSection.getBoundingClientRect();
+      mouse.x = (e.clientX - r.left) / r.width;
+      mouse.y = 1.0 - (e.clientY - r.top)  / r.height;
+    });
+
+    // ── Render loop ──────────────────────────────────────────
+    const tOffset = Math.random() * 100;
+    let rafId;
+    function render(ts) {
+      rafId = requestAnimationFrame(render);
+      gl.useProgram(prog);
+      const t = (ts * 0.001 + tOffset);
+      gl.uniform1f(U.iTime, t);
+
+      // Smooth mouse
+      smooth.x += (mouse.x - smooth.x) * 0.08;
+      smooth.y += (mouse.y - smooth.y) * 0.08;
+      gl.uniform2fv(U.uMouse, [smooth.x, smooth.y]);
+
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+    rafId = requestAnimationFrame(render);
+  })();
 
   // ── SCRAMBLE TEXT EFFECT ──────────────────────────────────
   const scrambleElements = document.querySelectorAll('.scramble-text');
