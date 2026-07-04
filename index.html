@@ -802,6 +802,7 @@
       gap: var(--space-6);
     }
     .infra-card {
+      --card-bg: var(--color-surface);
       background: var(--color-surface);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
@@ -878,6 +879,7 @@
     }
 
     .bento-visual {
+      --card-bg: var(--color-terminal-bg);
       background: var(--color-terminal-bg);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-lg);
@@ -1212,6 +1214,7 @@
       margin-top: var(--space-8);
     }
     .step {
+      --card-bg: var(--color-surface);
       padding: var(--space-6);
       border: 1px solid var(--color-border);
       border-radius: var(--radius-md);
@@ -2010,7 +2013,7 @@
       isolation: isolate;
       transform: translate3d(0, 0, 0.01px);
       border: 1px solid var(--color-border);
-      background: var(--card-bg, #120F17);
+      background: var(--card-bg, var(--color-surface));
       overflow: visible;
       box-shadow:
         rgba(0, 0, 0, 0.1) 0px 1px 2px,
@@ -3224,6 +3227,10 @@
   window.updateAllBorderGlowThemes = () => {
     const isLight = document.documentElement.getAttribute('data-theme') === 'light';
     const glowColor = isLight ? '340 80 70' : '270 80 80';
+    const colors = isLight 
+      ? ['#fb7185', '#fbbf24', '#60a5fa'] // Light theme: soft rose, amber, blue
+      : ['#c084fc', '#f472b6', '#38bdf8']; // Dark theme: neon purple, pink, blue
+      
     const cards = document.querySelectorAll('.border-glow-card');
     cards.forEach(card => {
       const parseHSL = (hslStr) => {
@@ -3236,9 +3243,20 @@
       const opacities = [100, 60, 50, 40, 30, 20, 10];
       const keys = ['', '-60', '-50', '-40', '-30', '-20', '-10'];
       const glowIntensity = parseFloat(card.getAttribute('data-glow-intensity')) || 1.0;
+      
       opacities.forEach((op, i) => {
         card.style.setProperty(`--glow-color${keys[i]}`, `hsl(${base} / ${Math.min(op * glowIntensity, 100)}%)`);
       });
+      
+      // Update gradient colors dynamically
+      const positions = ['80% 55%', '69% 34%', '8% 6%', '41% 38%', '86% 85%', '82% 18%', '51% 4%'];
+      const gradientKeys = ['--gradient-one', '--gradient-two', '--gradient-three', '--gradient-four', '--gradient-five', '--gradient-six', '--gradient-seven'];
+      const colorMap = [0, 1, 2, 0, 1, 2, 1];
+      for (let i = 0; i < 7; i++) {
+        const c = colors[colorMap[i]];
+        card.style.setProperty(gradientKeys[i], `radial-gradient(at ${positions[i]}, ${c} 0px, transparent 50%)`);
+      }
+      card.style.setProperty('--gradient-base', `linear-gradient(${colors[0]} 0 100%)`);
     });
   };
 
@@ -3253,27 +3271,14 @@
       const fillOpacity = card.getAttribute('data-fill-opacity') || 0.35;
       
       const style = window.getComputedStyle(card);
-      const backgroundColor = style.backgroundColor || '#120F17';
       const borderRadius = parseInt(style.borderRadius) || 28;
       
       // Setup dynamic variables
-      card.style.setProperty('--card-bg', backgroundColor);
       card.style.setProperty('--edge-sensitivity', edgeSensitivity);
       card.style.setProperty('--border-radius', `${borderRadius}px`);
       card.style.setProperty('--glow-padding', '40px');
       card.style.setProperty('--cone-spread', coneSpread);
       card.style.setProperty('--fill-opacity', fillOpacity);
-      
-      // Mesh gradient colors
-      const colors = ['#c084fc', '#f472b6', '#38bdf8'];
-      const positions = ['80% 55%', '69% 34%', '8% 6%', '41% 38%', '86% 85%', '82% 18%', '51% 4%'];
-      const gradientKeys = ['--gradient-one', '--gradient-two', '--gradient-three', '--gradient-four', '--gradient-five', '--gradient-six', '--gradient-seven'];
-      const colorMap = [0, 1, 2, 0, 1, 2, 1];
-      for (let i = 0; i < 7; i++) {
-        const c = colors[colorMap[i]];
-        card.style.setProperty(gradientKeys[i], `radial-gradient(at ${positions[i]}, ${c} 0px, transparent 50%)`);
-      }
-      card.style.setProperty('--gradient-base', `linear-gradient(${colors[0]} 0 100%)`);
       
       // Structure wrapping
       const edgeLight = document.createElement('span');
@@ -3304,7 +3309,13 @@
       card.appendChild(edgeLight);
       card.appendChild(inner);
       
-      // Override parent padding to 0 so borders align perfectly
+      // Clear layout styling from the parent card so it doesn't affect .border-glow-inner
+      card.style.display = 'block';
+      card.style.gridTemplateColumns = 'none';
+      card.style.gridTemplateRows = 'none';
+      card.style.gridTemplateAreas = 'none';
+      card.style.gap = '0';
+      card.style.alignItems = 'normal';
       card.style.setProperty('padding', '0', 'important');
       
       // Cursor tracking functions
