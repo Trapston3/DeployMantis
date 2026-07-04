@@ -604,7 +604,7 @@
       font-family: var(--font-mono);
       font-size: var(--text-xs);
       color: var(--color-terminal-text);
-      overflow-y: auto;
+      overflow: hidden;  /* no scrollbar — content is decorative, not interactive */
       flex-grow: 1;
       line-height: 1.7;
     }
@@ -3598,8 +3598,9 @@
     gl.uniform1f(U.uCurvature,         0.12);
     gl.uniform1f(U.uMouseStrength,     0.5);
     gl.uniform1f(U.uUseMouse,          1.0);
-    gl.uniform1f(U.uBrightness,        0.85);
+    // uBrightness is set per-theme inside applyThemeColors()
     gl.uniform2fv(U.uMouse,            [0.5, 0.5]);
+
 
     // ── Color helper ─────────────────────────────────────────
     function hexToRgb(hex) {
@@ -3609,13 +3610,15 @@
 
     function applyThemeColors() {
       const isLight = document.documentElement.getAttribute('data-theme') === 'light';
-      // Dark: lavender purple (#a78bfa) matching --color-primary dark
-      // Light: rose red (#f43f5e) matching --color-primary light
-      const tint = hexToRgb(isLight ? '#f43f5e' : '#a78bfa');
+      // Dark: lavender purple — bright glyphs on near-black
+      // Light: deep crimson — high contrast on warm cream; boost brightness so glyphs pop
+      const tint = hexToRgb(isLight ? '#c41230' : '#a78bfa');
       const bg   = hexToRgb(isLight ? '#fbf9f1' : '#080a0b');
       gl.useProgram(prog);
       gl.uniform3fv(U.uTint,       tint);
       gl.uniform3fv(U.uBackground, bg);
+      // Per-theme brightness: light needs more punch to overcome the bright bg
+      gl.uniform1f(U.uBrightness, isLight ? 1.4 : 0.85);
     }
     applyThemeColors();
     // Expose so theme toggle can call it
