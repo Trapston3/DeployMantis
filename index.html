@@ -941,6 +941,14 @@
     .bento-row.full-width {
       grid-template-columns: 1.1fr 0.9fr;
     }
+    /* Inner 2-column grid for code+verdict — collapses to 1-col on mobile */
+    .mv-visual-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--space-4);
+      align-items: center;
+      width: 100%;
+    }
     .mv-code-panel {
       font-family: var(--font-mono);
       font-size: 11px;
@@ -1183,12 +1191,18 @@
         grid-template-columns: 1fr !important;
         gap: var(--space-6);
       }
+      /* On mobile, ALWAYS show info/text first then visual below */
       .bento-row.reverse .bento-info {
-        order: 2;
+        order: 1;
       }
       .bento-row.reverse .bento-visual {
-        order: 1;
-        margin-bottom: var(--space-4);
+        order: 2;
+        margin-bottom: 0;
+        margin-top: var(--space-2);
+      }
+      /* Collapse the MantisVerify inner grid to single column */
+      .mv-visual-grid {
+        grid-template-columns: 1fr;
       }
       .bento-container {
         gap: 80px;
@@ -1787,7 +1801,13 @@
       vertical-align: bottom;
       height: 1.2em;
       line-height: 1.2;
+      /* Allow the absolutely-positioned words to overflow without clipping */
+      overflow: visible;
       transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    /* Ensure the h1 itself never clips the absolutely-positioned flip words */
+    .hero h1 {
+      overflow: visible;
     }
     .flip-word {
       position: absolute;
@@ -2383,9 +2403,10 @@
             </p>
           </div>
           
-          <div class="bento-visual border-glow-card" style="display:grid; grid-template-columns: 1fr 1fr; gap:var(--space-4); align-items:center;">
+          <div class="bento-visual border-glow-card">
+            <div class="mv-visual-grid">
 
-            
+
             <div class="mv-code-panel" style="position:relative; z-index:10;">
               <span>// main.py</span><br>
               <span class="mv-code-del">- eval(user_input) # risky</span><br>
@@ -2412,9 +2433,11 @@
                 <li>AST safety nodes verified</li>
                 <li>Execution boundaries matching</li>
               </ul>
-            </div>
-          </div>
-        </div>
+            </div><!-- /.mv-verdict-card -->
+            </div><!-- /.mv-visual-grid -->
+          </div><!-- /.bento-visual -->
+        </div><!-- /.bento-row MantisVerify -->
+
 
         <!-- Row 3: Token-Breaker -->
         <div class="bento-row">
